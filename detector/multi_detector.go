@@ -41,15 +41,13 @@ func New(opts ...Option) *MultiDetector {
 		md.detectors = append(md.detectors, NewPromptLeakDetector())
 	}
 
-	// TODO: Add instruction override detector when implemented
-	// if cfg.EnableInstructionOverride {
-	//     md.detectors = append(md.detectors, NewInstructionOverrideDetector())
-	// }
+	if cfg.EnableInstructionOverride {
+		md.detectors = append(md.detectors, NewInstructionOverrideDetector())
+	}
 
-	// TODO: Add obfuscation detector when implemented
-	// if cfg.EnableObfuscation {
-	//     md.detectors = append(md.detectors, NewObfuscationDetector())
-	// }
+	if cfg.EnableObfuscation {
+		md.detectors = append(md.detectors, NewObfuscationDetector())
+	}
 
 	return md
 }
