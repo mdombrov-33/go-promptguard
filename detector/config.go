@@ -15,11 +15,11 @@ type Config struct {
 	EnablePromptLeak bool
 
 	//* EnableInstructionOverride enables detection of instruction override attacks.
-	//* Default: true (not yet implemented)
+	//* Default: true
 	EnableInstructionOverride bool
 
 	//* EnableObfuscation enables detection of obfuscated payloads.
-	//* Default: true (not yet implemented)
+	//* Default: true
 	EnableObfuscation bool
 
 	//* MaxInputLength is the maximum input length to process (in bytes).
@@ -35,8 +35,8 @@ func defaultConfig() Config {
 		Threshold:                 0.7,
 		EnableRoleInjection:       true,
 		EnablePromptLeak:          true,
-		EnableInstructionOverride: false, //* Not implemented yet
-		EnableObfuscation:         false, //* Not implemented yet
+		EnableInstructionOverride: true,
+		EnableObfuscation:         true,
 		MaxInputLength:            0,
 	}
 }
