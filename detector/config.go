@@ -38,6 +38,14 @@ type Config struct {
 	//* Inputs longer than this will be truncated. 0 means no limit.
 	//* Default: 0 (no limit)
 	MaxInputLength int
+
+	//* LLMJudge is the LLM-based detector (optional, disabled by default).
+	//* Set using WithLLM() to enable LLM-based detection.
+	LLMJudge LLMJudge
+
+	//* LLMRunMode determines when the LLM detector runs.
+	//* Default: LLMAlways
+	LLMRunMode LLMRunMode
 }
 
 type Option func(*Config)
@@ -53,6 +61,8 @@ func defaultConfig() Config {
 		EnablePerplexity:          true,
 		EnableTokenAnomaly:        true,
 		MaxInputLength:            0,
+		LLMJudge:                  nil, // Disabled by default
+		LLMRunMode:                LLMAlways,
 	}
 }
 
@@ -135,6 +145,19 @@ func WithAllDetectors() Option {
 		c.EnableEntropy = true
 		c.EnablePerplexity = true
 		c.EnableTokenAnomaly = true
+	}
+}
+
+// * WithLLM enables LLM-based detection with the specified judge and run mode.
+// * LLM detection is disabled by default (expensive, slower).
+// * Run modes:
+// *   - LLMAlways: Run on every input (most accurate, most expensive)
+// *   - LLMConditional: Run only when pattern-based detectors are uncertain (0.5-0.7 score)
+// *   - LLMFallback: Run only when pattern-based detectors say safe (double-check negatives)
+func WithLLM(judge LLMJudge, mode LLMRunMode) Option {
+	return func(c *Config) {
+		c.LLMJudge = judge
+		c.LLMRunMode = mode
 	}
 }
 
