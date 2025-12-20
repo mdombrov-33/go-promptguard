@@ -87,10 +87,14 @@ func (d *PromptLeakDetector) Detect(ctx context.Context, input string) Result {
 		}
 	}
 
-	// * Calculate confidence based on number of patterns detected
-	confidence := 0.8
-	if len(patterns) > 1 {
-		confidence = 0.9 // * Higher confidence if multiple patterns match
+	// * Confidence matches risk score for clear patterns
+	confidence := 0.0
+	if maxScore > 0 {
+		confidence = maxScore
+		// * Boost confidence slightly if multiple patterns match
+		if len(patterns) > 1 {
+			confidence = min(confidence+0.05, 1.0)
+		}
 	}
 
 	return Result{

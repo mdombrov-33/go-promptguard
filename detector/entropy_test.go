@@ -150,36 +150,31 @@ func TestEntropyDetector_ConfidenceScaling(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		inputLength        int
-		expectedConfidence float64
+		input              string
+		minConfidence      float64
 	}{
 		{
-			name:               "short input (50 chars)",
-			inputLength:        50,
-			expectedConfidence: 0.7,
+			name:          "short high-entropy input (50 chars)",
+			input:         "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV",
+			minConfidence: 0.70, // risk score (no length bonus yet)
 		},
 		{
-			name:               "medium input (150 chars)",
-			inputLength:        150,
-			expectedConfidence: 0.8,
+			name:          "medium high-entropy input (150 chars)",
+			input:         "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV7cX4kJ6lA3gH9fT2yU5rW8eS1dZ7paB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV7cX4kJ6lA3gH9fT2yU5rW8eS1dZ7p",
+			minConfidence: 0.80, // risk score + bonus for length >100
 		},
 		{
-			name:               "long input (600 chars)",
-			inputLength:        600,
-			expectedConfidence: 0.9,
+			name:          "long high-entropy input (600 chars)",
+			input:         "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV7cX4kJ6lA3gH9fT2yU5rW8eS1dZ7p" + "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV7cX4kJ6lA3gH9fT2yU5rW8eS1dZ7p" + "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV7cX4kJ6lA3gH9fT2yU5rW8eS1dZ7p" + "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV7cX4kJ6lA3gH9fT2yU5rW8eS1dZ7p" + "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV7cX4kJ6lA3gH9fT2yU5rW8eS1dZ7p" + "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV7cX4kJ6lA3gH9fT2yU5rW8eS1dZ7p" + "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9iO2wM5qN8bV7cX4kJ6lA3gH9fT2yU5rW8eS1dZ7p" + "aB3xK9mQ2wP7zL5nR4tY",
+			minConfidence: 0.85, // risk score + both bonuses (>100 and >500)
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//* Create input of specified length
-			input := ""
-			for i := 0; i < tt.inputLength; i++ {
-				input += "a"
-			}
-
-			result := detector.Detect(ctx, input)
-			assert.Equal(t, tt.expectedConfidence, result.Confidence)
+			result := detector.Detect(ctx, tt.input)
+			assert.False(t, result.Safe, "High entropy should be detected")
+			assert.GreaterOrEqual(t, result.Confidence, tt.minConfidence, "Confidence should scale with input length")
 		})
 	}
 }

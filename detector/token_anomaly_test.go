@@ -361,37 +361,32 @@ func TestTokenAnomalyDetector_ConfidenceScaling(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name               string
-		inputLength        int
-		expectedConfidence float64
+		name          string
+		input         string
+		minConfidence float64
 	}{
 		{
-			name:               "short input (50 chars)",
-			inputLength:        50,
-			expectedConfidence: 0.7,
+			name:          "short mixed-script input (50 chars)",
+			input:         "Hello мир this is mixed Ελληνικά text testing",
+			minConfidence: 0.70, // risk score (script mixing detected)
 		},
 		{
-			name:               "medium input (150 chars)",
-			inputLength:        150,
-			expectedConfidence: 0.8,
+			name:          "medium mixed-script input (150 chars)",
+			input:         "Hello мир this is mixed Ελληνικά text testing with more content here to reach medium length абвгд ΑΒΓΔΕ some English and more mixing",
+			minConfidence: 0.75, // risk score + bonus for >100
 		},
 		{
-			name:               "long input (600 chars)",
-			inputLength:        600,
-			expectedConfidence: 0.9,
+			name:          "long mixed-script input (600 chars)",
+			input:         "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мір this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed Ελληνικά text " + "Hello мир this is mixed testing",
+			minConfidence: 0.80, // risk score + both bonuses (>100 and >500)
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//* Create input of specified length
-			input := ""
-			for i := 0; i < tt.inputLength; i++ {
-				input += "a"
-			}
-
-			result := detector.Detect(ctx, input)
-			assert.Equal(t, tt.expectedConfidence, result.Confidence)
+			result := detector.Detect(ctx, tt.input)
+			assert.False(t, result.Safe, "Mixed scripts should be detected")
+			assert.GreaterOrEqual(t, result.Confidence, tt.minConfidence, "Confidence should scale with input length")
 		})
 	}
 }

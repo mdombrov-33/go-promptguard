@@ -68,7 +68,9 @@ func New(opts ...Option) *MultiDetector {
 // Risk scoring algorithm:
 //   - Takes the highest individual risk score from any detector
 //   - Adds a 0.1 bonus for each additional pattern detected (capped at 1.0)
-//   - Confidence is averaged across detectors that found something (risk score > 0)
+//   - Confidence represents certainty of classification:
+//     * When detectors find patterns: max confidence + 0.05 bonus if multiple detectors agree
+//     * When no patterns found: high confidence (~0.85-0.90) it's safe
 // The input is considered unsafe if the final risk score >= threshold.
 func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 	if md.config.MaxInputLength > 0 && len(input) > md.config.MaxInputLength {
@@ -77,8 +79,8 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 
 	allPatterns := make([]DetectedPatterns, 0)
 	maxScore := 0.0
-	totalConfidence := 0.0
-	detectorsWithFindings := 0
+	maxConfidence := 0.0
+	detectorsTriggered := 0
 
 	//* Run each detector
 	for _, d := range md.detectors {
@@ -101,10 +103,12 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 			maxScore = result.RiskScore
 		}
 
-		//* Only count confidence from detectors that found something
+		//* Track highest confidence from detectors that triggered
 		if result.RiskScore > 0 {
-			totalConfidence += result.Confidence
-			detectorsWithFindings++
+			if result.Confidence > maxConfidence {
+				maxConfidence = result.Confidence
+			}
+			detectorsTriggered++
 		}
 	}
 
@@ -116,10 +120,22 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		finalScore = min(finalScore+bonus, 1.0)
 	}
 
-	// * Average confidence across detectors that found something
-	avgConfidence := 0.0
-	if detectorsWithFindings > 0 {
-		avgConfidence = totalConfidence / float64(detectorsWithFindings)
+	// * Calculate confidence based on detection results
+	finalConfidence := 0.0
+	if detectorsTriggered > 0 {
+		// Use max confidence from detectors, with bonus if multiple agree
+		finalConfidence = maxConfidence
+		if detectorsTriggered > 1 {
+			// Multiple detectors agree - boost confidence slightly
+			finalConfidence = min(finalConfidence+0.05, 1.0)
+		}
+	} else {
+		// No detections after checking all detectors = high confidence it's safe
+		// More detectors enabled = higher confidence
+		finalConfidence = 0.85 + (0.05 * float64(len(md.detectors)) / 7.0)
+		if finalConfidence > 1.0 {
+			finalConfidence = 1.0
+		}
 	}
 
 	// * Check if we should run LLM detector
@@ -154,21 +170,30 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 			finalScore = min(finalScore+bonus, 1.0)
 		}
 
-		//* Include LLM confidence if it found something
+		//* Recalculate confidence including LLM result
 		if llmResult.RiskScore > 0 {
-			totalConfidence += llmResult.Confidence
-			detectorsWithFindings++
+			if llmResult.Confidence > maxConfidence {
+				maxConfidence = llmResult.Confidence
+			}
+			detectorsTriggered++
 		}
 
-		if detectorsWithFindings > 0 {
-			avgConfidence = totalConfidence / float64(detectorsWithFindings)
+		// Recalculate confidence with LLM included
+		if detectorsTriggered > 0 {
+			finalConfidence = maxConfidence
+			if detectorsTriggered > 1 {
+				finalConfidence = min(finalConfidence+0.05, 1.0)
+			}
+		} else {
+			// Still no detections even after LLM check = very high confidence it's safe
+			finalConfidence = 0.90
 		}
 	}
 
 	return Result{
 		Safe:             finalScore < md.config.Threshold,
 		RiskScore:        finalScore,
-		Confidence:       avgConfidence,
+		Confidence:       finalConfidence,
 		DetectedPatterns: allPatterns,
 	}
 }

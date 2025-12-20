@@ -116,13 +116,17 @@ func (d *TokenAnomalyDetector) Detect(ctx context.Context, input string) Result 
 		}
 	}
 
-	// * Calculate confidence based on input length
-	confidence := 0.7
-	if len(input) > 100 {
-		confidence = 0.8
-	}
-	if len(input) > 500 {
-		confidence = 0.9
+	// * Confidence based on risk score, with bonus for longer inputs (more reliable)
+	confidence := 0.0
+	if maxScore > 0 {
+		confidence = maxScore
+		// * Add small bonus for longer inputs (more data = more reliable)
+		if len(input) > 100 {
+			confidence = min(confidence+0.05, 1.0)
+		}
+		if len(input) > 500 {
+			confidence = min(confidence+0.05, 1.0)
+		}
 	}
 
 	return Result{

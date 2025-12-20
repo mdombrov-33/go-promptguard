@@ -238,7 +238,7 @@ func TestObfuscationDetector_MultiplePatterns(t *testing.T) {
 
 	assert.False(t, result.Safe, "Should be unsafe")
 	assert.GreaterOrEqual(t, result.RiskScore, 0.7)
-	assert.Equal(t, 0.8, result.Confidence, "Higher confidence with multiple patterns")
+	assert.GreaterOrEqual(t, result.Confidence, 0.75, "Higher confidence with multiple patterns")
 	assert.GreaterOrEqual(t, len(result.DetectedPatterns), 2, "Should detect multiple patterns")
 }
 

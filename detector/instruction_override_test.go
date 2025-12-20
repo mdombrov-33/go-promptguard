@@ -212,7 +212,7 @@ func TestInstructionOverrideDetector_MultiplePatterns(t *testing.T) {
 
 	assert.False(t, result.Safe, "Should be unsafe")
 	assert.Equal(t, 0.9, result.RiskScore, "Should use highest score")
-	assert.Equal(t, 0.9, result.Confidence, "Confidence should be higher with multiple patterns")
+	assert.InDelta(t, 0.95, result.Confidence, 0.01, "Confidence should be higher with multiple patterns")
 	assert.Len(t, result.DetectedPatterns, 2, "Should detect both patterns")
 }
 
