@@ -260,9 +260,6 @@ guard := detector.New(
 ### Selective Detection
 
 ```go
-// Only check for role injection
-guard := detector.New(detector.WithOnlyRoleInjection())
-
 // Enable all detectors explicitly (default)
 guard := detector.New(detector.WithAllDetectors())
 
