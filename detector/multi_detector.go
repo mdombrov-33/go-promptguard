@@ -49,6 +49,18 @@ func New(opts ...Option) *MultiDetector {
 		md.detectors = append(md.detectors, NewObfuscationDetector())
 	}
 
+	if cfg.EnableEntropy {
+		md.detectors = append(md.detectors, NewEntropyDetector())
+	}
+
+	if cfg.EnablePerplexity {
+		md.detectors = append(md.detectors, NewPerplexityDetector())
+	}
+
+	if cfg.EnableTokenAnomaly {
+		md.detectors = append(md.detectors, NewTokenAnomalyDetector())
+	}
+
 	return md
 }
 
