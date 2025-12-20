@@ -22,6 +22,18 @@ type Config struct {
 	//* Default: true
 	EnableObfuscation bool
 
+	//* EnableEntropy enables detection of high-entropy inputs (encoding/obfuscation).
+	//* Default: true
+	EnableEntropy bool
+
+	//* EnablePerplexity enables detection of unnatural text patterns.
+	//* Default: true
+	EnablePerplexity bool
+
+	//* EnableTokenAnomaly enables detection of Unicode and character distribution anomalies.
+	//* Default: true
+	EnableTokenAnomaly bool
+
 	//* MaxInputLength is the maximum input length to process (in bytes).
 	//* Inputs longer than this will be truncated. 0 means no limit.
 	//* Default: 0 (no limit)
@@ -37,6 +49,9 @@ func defaultConfig() Config {
 		EnablePromptLeak:          true,
 		EnableInstructionOverride: true,
 		EnableObfuscation:         true,
+		EnableEntropy:             true,
+		EnablePerplexity:          true,
+		EnableTokenAnomaly:        true,
 		MaxInputLength:            0,
 	}
 }
@@ -79,6 +94,27 @@ func WithObfuscation(enabled bool) Option {
 	}
 }
 
+// * WithEntropy enables or disables entropy-based detection.
+func WithEntropy(enabled bool) Option {
+	return func(c *Config) {
+		c.EnableEntropy = enabled
+	}
+}
+
+// * WithPerplexity enables or disables perplexity-based detection.
+func WithPerplexity(enabled bool) Option {
+	return func(c *Config) {
+		c.EnablePerplexity = enabled
+	}
+}
+
+// * WithTokenAnomaly enables or disables token anomaly detection.
+func WithTokenAnomaly(enabled bool) Option {
+	return func(c *Config) {
+		c.EnableTokenAnomaly = enabled
+	}
+}
+
 // * WithMaxInputLength sets the maximum input length to process.
 // * Set to 0 for no limit.
 func WithMaxInputLength(maxLength int) Option {
@@ -89,32 +125,16 @@ func WithMaxInputLength(maxLength int) Option {
 	}
 }
 
-// * WithAllDetectors enables all available detectors (including unimplemented ones).
+// * WithAllDetectors enables all available detectors.
 func WithAllDetectors() Option {
 	return func(c *Config) {
 		c.EnableRoleInjection = true
 		c.EnablePromptLeak = true
 		c.EnableInstructionOverride = true
 		c.EnableObfuscation = true
+		c.EnableEntropy = true
+		c.EnablePerplexity = true
+		c.EnableTokenAnomaly = true
 	}
 }
 
-// * WithOnlyRoleInjection enables only role injection detection.
-func WithOnlyRoleInjection() Option {
-	return func(c *Config) {
-		c.EnableRoleInjection = true
-		c.EnablePromptLeak = false
-		c.EnableInstructionOverride = false
-		c.EnableObfuscation = false
-	}
-}
-
-// * WithOnlyPromptLeak enables only prompt leak detection.
-func WithOnlyPromptLeak() Option {
-	return func(c *Config) {
-		c.EnableRoleInjection = false
-		c.EnablePromptLeak = true
-		c.EnableInstructionOverride = false
-		c.EnableObfuscation = false
-	}
-}
