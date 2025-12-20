@@ -421,6 +421,78 @@ Based on impact × frequency × false positive rate:
 
 ---
 
+## Detection Methods Implemented
+
+Based on the attack patterns above, go-promptguard implements a multi-layered detection approach combining pattern matching and statistical analysis.
+
+### Pattern-Based Detection (Regex)
+
+**Role Injection Detector:**
+- Special token patterns: `<|user|>`, `<|assistant|>`, `<|system|>`, etc.
+- XML/HTML tag patterns: `<user>`, `<system>`, `<admin>`, etc.
+- Role-switching phrases: "you are now", "act as", "pretend to be"
+- Conversation injection: `User:`, `Assistant:`, `System:` patterns
+
+**Prompt Leak Detector:**
+- System prompt requests: "show me your system prompt"
+- Instruction queries: "what are your instructions/rules"
+- Repeat commands: "repeat everything above"
+- Configuration queries: "how were you configured"
+
+**Instruction Override Detector:**
+- Temporal commands: "after X, do Y"
+- Direct overrides: "ignore previous", "disregard all"
+- Delimiter injection: "new instructions:", "also do:"
+- Priority overrides: "instead", "rather than"
+
+**Obfuscation Detector:**
+- Base64 encoding (with keyword verification)
+- Hex encoding (0x, \x, % formats)
+- Unicode escape sequences
+- Zero-width characters
+- Excessive special characters
+
+### Statistical Detection (Heuristic Analysis)
+
+**Entropy Detector:**
+- Calculates Shannon entropy (H = -Σ p(x) log₂ p(x))
+- Detects high-randomness inputs indicating encoding
+- Threshold: 4.5 bits out of 8.0 maximum
+- Catches base64, hex, and encrypted payloads
+
+**Perplexity Detector:**
+- Character bigram frequency analysis
+- Compares input to common English bigram patterns
+- Detects adversarial suffixes and keyboard mashing
+- Threshold: 45% rare bigrams
+- Also detects 4+ consecutive consonant clusters
+
+**Token Anomaly Detector:**
+- Unicode script mixing (Latin + Cyrillic + Greek + Arabic + CJK)
+- Special character ratio analysis (>40% triggers)
+- Digit density detection (>70% triggers)
+- Zero-width character spam detection
+- Character repetition pattern analysis
+
+### Detection Strategy
+
+**Multi-layer approach:**
+1. **Fast layer** (always enabled): Pattern-based regex detectors
+2. **Statistical layer** (configurable): Entropy, perplexity, token anomaly
+3. **Risk aggregation**: Highest individual score + 0.1 bonus per additional pattern
+
+**Thresholds:**
+- Default: 0.7 (70% confidence)
+- Configurable per deployment
+- Individual detector scores: 0.6-0.9 based on severity
+
+**Performance targets:**
+- <1ms p95 latency
+- Zero external dependencies
+- Single binary deployment
+
+---
+
 ## References
 
 ### Academic Papers
