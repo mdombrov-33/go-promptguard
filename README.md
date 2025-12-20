@@ -280,6 +280,77 @@ guard := detector.New(
 )
 ```
 
+### LLM-Based Detection (Optional)
+
+For highest accuracy, use an LLM to classify inputs. This is **optional** and **disabled by default** due to cost and latency.
+
+**OpenAI Example:**
+```go
+judge := detector.NewOpenAIJudge(apiKey, "gpt-4o-mini")
+guard := detector.New(
+    detector.WithLLM(judge, detector.LLMAlways),  // Run on every input
+)
+```
+
+**Local Model (Ollama):**
+```go
+judge := detector.NewOllamaJudge("llama3.2")
+guard := detector.New(
+    detector.WithLLM(judge, detector.LLMAlways),
+)
+```
+
+**Conditional Mode (cost-efficient):**
+```go
+// Only run LLM when pattern-based detectors are uncertain (0.5-0.7 score)
+guard := detector.New(
+    detector.WithLLM(judge, detector.LLMConditional),
+)
+```
+
+**Run Modes:**
+- `LLMAlways`: Run on every input (most accurate, most expensive)
+- `LLMConditional`: Run only when pattern-based score is 0.5-0.7 (balanced)
+- `LLMFallback`: Run only when patterns say safe (catch false negatives)
+
+**Output Formats:**
+```go
+// Simple mode (cheap, returns "SAFE" or "ATTACK")
+judge := detector.NewOpenAIJudge(
+    apiKey,
+    "gpt-4o-mini",
+    detector.WithOutputFormat(detector.LLMSimple),
+)
+
+// Structured mode (more tokens, includes reasoning)
+judge := detector.NewOpenAIJudge(
+    apiKey,
+    "gpt-4o-mini",
+    detector.WithOutputFormat(detector.LLMStructured),
+)
+```
+
+**Supported Providers:**
+- OpenAI: `NewOpenAIJudge(apiKey, "gpt-4o-mini")`
+- OpenRouter: `NewOpenRouterJudge(apiKey, "anthropic/claude-3-haiku")`
+- Ollama (local): `NewOllamaJudge("llama3.2")`
+- Custom: Implement `LLMJudge` interface
+
+**Custom LLM Implementation:**
+```go
+type MyJudge struct{}
+
+func (j *MyJudge) Judge(ctx context.Context, input string) (detector.LLMResult, error) {
+    // Call your LLM service
+    return detector.LLMResult{
+        IsAttack:   false,
+        Confidence: 0.9,
+    }, nil
+}
+
+guard := detector.New(detector.WithLLM(&MyJudge{}, detector.LLMAlways))
+```
+
 ### Examining Results
 
 ```go
