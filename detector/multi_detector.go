@@ -94,10 +94,8 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 
 		result := d.Detect(ctx, input)
 
-		// * Collect all detected patterns
 		allPatterns = append(allPatterns, result.DetectedPatterns...)
 
-		// * Track highest individual score
 		if result.RiskScore > maxScore {
 			maxScore = result.RiskScore
 		}
@@ -119,6 +117,42 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		avgConfidence = totalConfidence / float64(len(md.detectors))
 	}
 
+	// * Check if we should run LLM detector
+	shouldRunLLM := false
+	if md.config.LLMJudge != nil {
+		switch md.config.LLMRunMode {
+		case LLMAlways:
+			shouldRunLLM = true
+		case LLMConditional:
+			//* Run if pattern-based detectors are uncertain (0.5-0.7)
+			shouldRunLLM = finalScore >= 0.5 && finalScore <= 0.7
+		case LLMFallback:
+			//* Run if pattern-based detectors say safe
+			shouldRunLLM = finalScore < md.config.Threshold
+		}
+	}
+
+	// * Run LLM detector if needed
+	if shouldRunLLM {
+		llmDetector := NewLLMDetector(md.config.LLMJudge)
+		llmResult := llmDetector.Detect(ctx, input)
+
+		allPatterns = append(allPatterns, llmResult.DetectedPatterns...)
+
+		if llmResult.RiskScore > maxScore {
+			maxScore = llmResult.RiskScore
+		}
+
+		finalScore = maxScore
+		if len(allPatterns) > 1 {
+			bonus := 0.1 * float64(len(allPatterns)-1)
+			finalScore = min(finalScore+bonus, 1.0)
+		}
+
+		totalConfidence += llmResult.Confidence
+		avgConfidence = totalConfidence / float64(len(md.detectors)+1)
+	}
+
 	return Result{
 		Safe:             finalScore < md.config.Threshold,
 		RiskScore:        finalScore,
@@ -127,7 +161,6 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 	}
 }
 
-// * Helper function to get minimum of two float64 values
 func min(a, b float64) float64 {
 	if a < b {
 		return a
