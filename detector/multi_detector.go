@@ -68,7 +68,7 @@ func New(opts ...Option) *MultiDetector {
 // Risk scoring algorithm:
 //   - Takes the highest individual risk score from any detector
 //   - Adds a 0.1 bonus for each additional pattern detected (capped at 1.0)
-//   - Confidence is averaged across all detectors
+//   - Confidence is averaged across detectors that found something (risk score > 0)
 // The input is considered unsafe if the final risk score >= threshold.
 func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 	if md.config.MaxInputLength > 0 && len(input) > md.config.MaxInputLength {
@@ -78,6 +78,7 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 	allPatterns := make([]DetectedPatterns, 0)
 	maxScore := 0.0
 	totalConfidence := 0.0
+	detectorsWithFindings := 0
 
 	//* Run each detector
 	for _, d := range md.detectors {
@@ -100,7 +101,11 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 			maxScore = result.RiskScore
 		}
 
-		totalConfidence += result.Confidence
+		//* Only count confidence from detectors that found something
+		if result.RiskScore > 0 {
+			totalConfidence += result.Confidence
+			detectorsWithFindings++
+		}
 	}
 
 	//* Calculate final risk score using our algorithm:
@@ -111,10 +116,10 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		finalScore = min(finalScore+bonus, 1.0)
 	}
 
-	// * Average confidence across all detectors
+	// * Average confidence across detectors that found something
 	avgConfidence := 0.0
-	if len(md.detectors) > 0 {
-		avgConfidence = totalConfidence / float64(len(md.detectors))
+	if detectorsWithFindings > 0 {
+		avgConfidence = totalConfidence / float64(detectorsWithFindings)
 	}
 
 	// * Check if we should run LLM detector
@@ -149,8 +154,15 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 			finalScore = min(finalScore+bonus, 1.0)
 		}
 
-		totalConfidence += llmResult.Confidence
-		avgConfidence = totalConfidence / float64(len(md.detectors)+1)
+		//* Include LLM confidence if it found something
+		if llmResult.RiskScore > 0 {
+			totalConfidence += llmResult.Confidence
+			detectorsWithFindings++
+		}
+
+		if detectorsWithFindings > 0 {
+			avgConfidence = totalConfidence / float64(detectorsWithFindings)
+		}
 	}
 
 	return Result{
