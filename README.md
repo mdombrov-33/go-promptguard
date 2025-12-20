@@ -1,7 +1,7 @@
 # go-promptguard
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/mdombrov-33/go-promptguard.svg)](https://pkg.go.dev/github.com/mdombrov-33/go-promptguard)
-[![Go Report Card](https://goreportcard.com/badge/github.com/mdombrov-33/go-promptguard)](https://goreportcard.com/report/github.com/mdombrov-33/go-promptguard)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mdombrov-33/go-promptguard?style=flat)](https://goreportcard.com/report/github.com/mdombrov-33/go-promptguard)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/mdombrov-33/go-promptguard)](https://go.dev)
 
