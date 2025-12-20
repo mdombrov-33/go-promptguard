@@ -1,8 +1,9 @@
 # go-promptguard
 
-[![Go Version](https://img.shields.io/badge/go-1.23%2B-blue)](https://go.dev)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/mdombrov-33/go-promptguard.svg)](https://pkg.go.dev/github.com/mdombrov-33/go-promptguard)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mdombrov-33/go-promptguard)](https://goreportcard.com/report/github.com/mdombrov-33/go-promptguard)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/mdombrov-33/go-promptguard)](https://go.dev)
 
 Fast, lightweight prompt injection detection for Go. Detects attacks in **<1ms** with zero dependencies using pattern matching and heuristics.
 
