@@ -285,14 +285,16 @@ guard := detector.New(
 For highest accuracy, use an LLM to classify inputs. This is **optional** and **disabled by default** due to cost and latency.
 
 **OpenAI Example:**
+
 ```go
-judge := detector.NewOpenAIJudge(apiKey, "gpt-4o-mini")
+judge := detector.NewOpenAIJudge(apiKey, "gpt-5")
 guard := detector.New(
     detector.WithLLM(judge, detector.LLMAlways),  // Run on every input
 )
 ```
 
 **Local Model (Ollama):**
+
 ```go
 judge := detector.NewOllamaJudge("llama3.2")
 guard := detector.New(
@@ -301,6 +303,7 @@ guard := detector.New(
 ```
 
 **Conditional Mode (cost-efficient):**
+
 ```go
 // Only run LLM when pattern-based detectors are uncertain (0.5-0.7 score)
 guard := detector.New(
@@ -309,34 +312,38 @@ guard := detector.New(
 ```
 
 **Run Modes:**
+
 - `LLMAlways`: Run on every input (most accurate, most expensive)
 - `LLMConditional`: Run only when pattern-based score is 0.5-0.7 (balanced)
 - `LLMFallback`: Run only when patterns say safe (catch false negatives)
 
 **Output Formats:**
+
 ```go
 // Simple mode (cheap, returns "SAFE" or "ATTACK")
 judge := detector.NewOpenAIJudge(
     apiKey,
-    "gpt-4o-mini",
+    "gpt-5",
     detector.WithOutputFormat(detector.LLMSimple),
 )
 
 // Structured mode (more tokens, includes reasoning)
 judge := detector.NewOpenAIJudge(
     apiKey,
-    "gpt-4o-mini",
+    "gpt-5",
     detector.WithOutputFormat(detector.LLMStructured),
 )
 ```
 
 **Supported Providers:**
-- OpenAI: `NewOpenAIJudge(apiKey, "gpt-4o-mini")`
+
+- OpenAI: `NewOpenAIJudge(apiKey, "gpt-5")`
 - OpenRouter: `NewOpenRouterJudge(apiKey, "anthropic/claude-3-haiku")`
 - Ollama (local): `NewOllamaJudge("llama3.2")`
 - Custom: Implement `LLMJudge` interface
 
 **Custom LLM Implementation:**
+
 ```go
 type MyJudge struct{}
 
