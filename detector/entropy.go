@@ -5,18 +5,20 @@ import (
 	"math"
 )
 
-// * EntropyDetector detects high-entropy inputs indicating obfuscation or encoding.
-// * Uses Shannon entropy to measure randomness - high entropy suggests base64, hex, or encrypted content.
+// EntropyDetector detects high-entropy inputs indicating obfuscation or encoding.
+// Uses Shannon entropy to measure randomness - high entropy suggests base64, hex, or encrypted content.
 type EntropyDetector struct {
 	threshold float64 //* Entropy threshold above which input is suspicious
 }
 
+// NewEntropyDetector creates a new entropy detector with default threshold (4.5).
 func NewEntropyDetector() *EntropyDetector {
 	return &EntropyDetector{
 		threshold: 4.5, //* Default: 4.5 out of max 8.0 (binary)
 	}
 }
 
+// NewEntropyDetectorWithThreshold creates a new entropy detector with custom threshold.
 func NewEntropyDetectorWithThreshold(threshold float64) *EntropyDetector {
 	return &EntropyDetector{
 		threshold: threshold,
@@ -81,8 +83,8 @@ func (d *EntropyDetector) Detect(ctx context.Context, input string) Result {
 	}
 }
 
-// * calculateShannonEntropy computes Shannon entropy of a string.
-// * Returns value between 0 (perfectly predictable) and 8.0 (maximum randomness for byte data).
+// calculateShannonEntropy computes Shannon entropy of a string.
+// Returns value between 0 (perfectly predictable) and 8.0 (maximum randomness for byte data).
 func calculateShannonEntropy(s string) float64 {
 	if len(s) == 0 {
 		return 0.0
@@ -109,12 +111,12 @@ func calculateShannonEntropy(s string) float64 {
 	return entropy
 }
 
-// * formatEntropyMatch creates a human-readable description of entropy detection.
+// formatEntropyMatch creates a human-readable description of entropy detection.
 func formatEntropyMatch(entropy float64) string {
 	return "High entropy detected: " + formatFloat(entropy) + "/8.0"
 }
 
-// * formatFloat formats float to 2 decimal places as string.
+// formatFloat formats float to 2 decimal places as string.
 func formatFloat(f float64) string {
 	s := ""
 	if f < 0 {
@@ -138,7 +140,7 @@ func formatFloat(f float64) string {
 	return s
 }
 
-// * itoa converts int to string without using strconv.
+// itoa converts int to string without using strconv.
 func itoa(i int) string {
 	if i == 0 {
 		return "0"

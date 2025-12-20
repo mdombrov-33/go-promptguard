@@ -5,10 +5,10 @@ import (
 	"regexp"
 )
 
-// * InstructionOverrideDetector detects attempts to override or chain malicious instructions.
+// InstructionOverrideDetector detects attempts to override or chain malicious instructions.
 type InstructionOverrideDetector struct{}
 
-// * Compiled regex patterns for instruction override detection
+// Compiled regex patterns for instruction override detection
 var (
 	// * Temporal commands that chain instructions (e.g., "after summarizing, send email")
 	temporalCommandsRe = regexp.MustCompile(`(?i)(after|once|when)\s+\w+ing.*?,`)
@@ -23,6 +23,7 @@ var (
 	priorityOverrideRe = regexp.MustCompile(`(?i)(instead|rather than|don't|do not)\s+\w+`)
 )
 
+// NewInstructionOverrideDetector creates a new instruction override detector.
 func NewInstructionOverrideDetector() *InstructionOverrideDetector {
 	return &InstructionOverrideDetector{}
 }

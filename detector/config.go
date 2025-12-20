@@ -1,6 +1,6 @@
 package detector
 
-// * Config holds configuration for the multi-detector.
+// Config holds configuration for the multi-detector.
 type Config struct {
 	//* Threshold is the risk score above which input is considered unsafe (0.0-1.0).
 	//* Default: 0.7
@@ -66,8 +66,8 @@ func defaultConfig() Config {
 	}
 }
 
-// * WithThreshold sets the risk score threshold (0.0-1.0).
-// * Inputs with risk scores >= threshold are considered unsafe.
+// WithThreshold sets the risk score threshold (0.0-1.0).
+// Inputs with risk scores >= threshold are considered unsafe.
 func WithThreshold(threshold float64) Option {
 	return func(c *Config) {
 		if threshold >= 0.0 && threshold <= 1.0 {
@@ -76,57 +76,57 @@ func WithThreshold(threshold float64) Option {
 	}
 }
 
-// * WithRoleInjection enables or disables role injection detection.
+// WithRoleInjection enables or disables role injection detection.
 func WithRoleInjection(enabled bool) Option {
 	return func(c *Config) {
 		c.EnableRoleInjection = enabled
 	}
 }
 
-// * WithPromptLeak enables or disables prompt leak detection.
+// WithPromptLeak enables or disables prompt leak detection.
 func WithPromptLeak(enabled bool) Option {
 	return func(c *Config) {
 		c.EnablePromptLeak = enabled
 	}
 }
 
-// * WithInstructionOverride enables or disables instruction override detection.
+// WithInstructionOverride enables or disables instruction override detection.
 func WithInstructionOverride(enabled bool) Option {
 	return func(c *Config) {
 		c.EnableInstructionOverride = enabled
 	}
 }
 
-// * WithObfuscation enables or disables obfuscation detection.
+// WithObfuscation enables or disables obfuscation detection.
 func WithObfuscation(enabled bool) Option {
 	return func(c *Config) {
 		c.EnableObfuscation = enabled
 	}
 }
 
-// * WithEntropy enables or disables entropy-based detection.
+// WithEntropy enables or disables entropy-based detection.
 func WithEntropy(enabled bool) Option {
 	return func(c *Config) {
 		c.EnableEntropy = enabled
 	}
 }
 
-// * WithPerplexity enables or disables perplexity-based detection.
+// WithPerplexity enables or disables perplexity-based detection.
 func WithPerplexity(enabled bool) Option {
 	return func(c *Config) {
 		c.EnablePerplexity = enabled
 	}
 }
 
-// * WithTokenAnomaly enables or disables token anomaly detection.
+// WithTokenAnomaly enables or disables token anomaly detection.
 func WithTokenAnomaly(enabled bool) Option {
 	return func(c *Config) {
 		c.EnableTokenAnomaly = enabled
 	}
 }
 
-// * WithMaxInputLength sets the maximum input length to process.
-// * Set to 0 for no limit.
+// WithMaxInputLength sets the maximum input length to process.
+// Set to 0 for no limit.
 func WithMaxInputLength(maxLength int) Option {
 	return func(c *Config) {
 		if maxLength >= 0 {
@@ -135,7 +135,7 @@ func WithMaxInputLength(maxLength int) Option {
 	}
 }
 
-// * WithAllDetectors enables all available detectors.
+// WithAllDetectors enables all available detectors.
 func WithAllDetectors() Option {
 	return func(c *Config) {
 		c.EnableRoleInjection = true
@@ -148,12 +148,12 @@ func WithAllDetectors() Option {
 	}
 }
 
-// * WithLLM enables LLM-based detection with the specified judge and run mode.
-// * LLM detection is disabled by default (expensive, slower).
-// * Run modes:
-// *   - LLMAlways: Run on every input (most accurate, most expensive)
-// *   - LLMConditional: Run only when pattern-based detectors are uncertain (0.5-0.7 score)
-// *   - LLMFallback: Run only when pattern-based detectors say safe (double-check negatives)
+// WithLLM enables LLM-based detection with the specified judge and run mode.
+// LLM detection is disabled by default (expensive, slower).
+// Run modes:
+//   - LLMAlways: Run on every input (most accurate, most expensive)
+//   - LLMConditional: Run only when pattern-based detectors are uncertain (0.5-0.7 score)
+//   - LLMFallback: Run only when pattern-based detectors say safe (double-check negatives)
 func WithLLM(judge LLMJudge, mode LLMRunMode) Option {
 	return func(c *Config) {
 		c.LLMJudge = judge

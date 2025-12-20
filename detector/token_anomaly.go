@@ -5,13 +5,14 @@ import (
 	"unicode"
 )
 
-// * TokenAnomalyDetector detects unusual character distributions and Unicode anomalies.
-// * Catches Unicode mixing, excessive special characters, zero-width spam, and keyboard mashing.
+// TokenAnomalyDetector detects unusual character distributions and Unicode anomalies.
+// Catches Unicode mixing, excessive special characters, zero-width spam, and keyboard mashing.
 type TokenAnomalyDetector struct {
 	specialCharThreshold float64 //* Ratio of special characters that triggers detection
 	digitThreshold       float64 //* Ratio of digits that triggers detection
 }
 
+// NewTokenAnomalyDetector creates a new token anomaly detector with default thresholds.
 func NewTokenAnomalyDetector() *TokenAnomalyDetector {
 	return &TokenAnomalyDetector{
 		specialCharThreshold: 0.4, //* 40% special characters triggers detection
@@ -132,14 +133,14 @@ func (d *TokenAnomalyDetector) Detect(ctx context.Context, input string) Result 
 	}
 }
 
-// * scriptMixingResult holds the result of script mixing detection.
+// scriptMixingResult holds the result of script mixing detection.
 type scriptMixingResult struct {
 	detected    bool
 	scriptCount int
 	scripts     []string
 }
 
-// * detectScriptMixing checks if input mixes multiple Unicode scripts (Latin, Cyrillic, Greek, Arabic, etc.).
+// detectScriptMixing checks if input mixes multiple Unicode scripts (Latin, Cyrillic, Greek, Arabic, etc.).
 func detectScriptMixing(s string) scriptMixingResult {
 	scriptsFound := make(map[string]bool)
 	scriptNames := []string{}
@@ -187,7 +188,7 @@ func detectScriptMixing(s string) scriptMixingResult {
 	}
 }
 
-// * calculateSpecialCharRatio calculates ratio of non-alphanumeric characters (excluding spaces).
+// calculateSpecialCharRatio calculates ratio of non-alphanumeric characters (excluding spaces).
 func calculateSpecialCharRatio(s string) float64 {
 	if len(s) == 0 {
 		return 0.0
@@ -203,7 +204,7 @@ func calculateSpecialCharRatio(s string) float64 {
 	return float64(specialCount) / float64(len(s))
 }
 
-// * calculateDigitRatio calculates ratio of digit characters.
+// calculateDigitRatio calculates ratio of digit characters.
 func calculateDigitRatio(s string) float64 {
 	if len(s) == 0 {
 		return 0.0
@@ -219,7 +220,7 @@ func calculateDigitRatio(s string) float64 {
 	return float64(digitCount) / float64(len(s))
 }
 
-// * countZeroWidthChars counts zero-width Unicode characters (often used in spam/obfuscation).
+// countZeroWidthChars counts zero-width Unicode characters (often used in spam/obfuscation).
 func countZeroWidthChars(s string) int {
 	count := 0
 	zeroWidthChars := []rune{
@@ -242,7 +243,7 @@ func countZeroWidthChars(s string) int {
 	return count
 }
 
-// * calculateRepetitionRatio calculates ratio of repeated character sequences.
+// calculateRepetitionRatio calculates ratio of repeated character sequences.
 func calculateRepetitionRatio(s string) float64 {
 	if len(s) < 3 {
 		return 0.0
@@ -259,7 +260,7 @@ func calculateRepetitionRatio(s string) float64 {
 	return float64(repeatedCount) / float64(len(s))
 }
 
-// * isLatin checks if rune is in Latin script range.
+// isLatin checks if rune is in Latin script range.
 func isLatin(r rune) bool {
 	return (r >= 0x0041 && r <= 0x005A) || // A-Z
 		(r >= 0x0061 && r <= 0x007A) || // a-z
@@ -267,22 +268,22 @@ func isLatin(r rune) bool {
 		(r >= 0x0100 && r <= 0x017F) // Latin Extended-A
 }
 
-// * isCyrillic checks if rune is in Cyrillic script range.
+// isCyrillic checks if rune is in Cyrillic script range.
 func isCyrillic(r rune) bool {
 	return r >= 0x0400 && r <= 0x04FF
 }
 
-// * isGreek checks if rune is in Greek script range.
+// isGreek checks if rune is in Greek script range.
 func isGreek(r rune) bool {
 	return r >= 0x0370 && r <= 0x03FF
 }
 
-// * isArabic checks if rune is in Arabic script range.
+// isArabic checks if rune is in Arabic script range.
 func isArabic(r rune) bool {
 	return r >= 0x0600 && r <= 0x06FF
 }
 
-// * isCJK checks if rune is in CJK (Chinese, Japanese, Korean) script range.
+// isCJK checks if rune is in CJK (Chinese, Japanese, Korean) script range.
 func isCJK(r rune) bool {
 	return (r >= 0x4E00 && r <= 0x9FFF) || // CJK Unified Ideographs
 		(r >= 0x3040 && r <= 0x309F) || // Hiragana
@@ -290,13 +291,13 @@ func isCJK(r rune) bool {
 		(r >= 0xAC00 && r <= 0xD7AF) // Hangul
 }
 
-// * formatRatioMatch creates human-readable description for ratio detections.
+// formatRatioMatch creates human-readable description for ratio detections.
 func formatRatioMatch(label string, ratio float64) string {
 	percentage := int(ratio * 100)
 	return label + ": " + itoa(percentage) + "%"
 }
 
-// * formatCountMatch creates human-readable description for count detections.
+// formatCountMatch creates human-readable description for count detections.
 func formatCountMatch(label string, count int) string {
 	return label + ": " + itoa(count) + " detected"
 }

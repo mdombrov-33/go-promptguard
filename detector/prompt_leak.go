@@ -5,10 +5,10 @@ import (
 	"regexp"
 )
 
-// * PromptLeakDetector detects attempts to extract system prompts or instructions.
+// PromptLeakDetector detects attempts to extract system prompts or instructions.
 type PromptLeakDetector struct{}
 
-// * Compiled regex patterns for prompt leak detection
+// Compiled regex patterns for prompt leak detection
 var (
 	// * Explicit system prompt extraction attempts
 	systemPromptRe = regexp.MustCompile(`(?i)(show|reveal|display|print|output|give me|what is|what's).*(system prompt|initial prompt|original prompt)`)
@@ -23,6 +23,7 @@ var (
 	configRe = regexp.MustCompile(`(?i)(what were you|how were you|what are you).*(told|programmed|configured|instructed|trained|set up)`)
 )
 
+// NewPromptLeakDetector creates a new prompt leak detector.
 func NewPromptLeakDetector() *PromptLeakDetector {
 	return &PromptLeakDetector{}
 }

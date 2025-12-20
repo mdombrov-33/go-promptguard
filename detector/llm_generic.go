@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// * GenericLLMJudge implements LLMJudge using OpenAI-compatible API endpoints.
-// * Works with OpenAI, OpenRouter, Ollama, vLLM, LM Studio, and other compatible providers.
+// GenericLLMJudge implements LLMJudge using OpenAI-compatible API endpoints.
+// Works with OpenAI, OpenRouter, Ollama, vLLM, LM Studio, and other compatible providers.
 type GenericLLMJudge struct {
 	endpoint     string
 	apiKey       string
@@ -23,24 +23,24 @@ type GenericLLMJudge struct {
 	httpClient   *http.Client
 }
 
-// * LLMJudgeOption allows customizing the GenericLLMJudge.
+// LLMJudgeOption allows customizing the GenericLLMJudge.
 type LLMJudgeOption func(*GenericLLMJudge)
 
-// * WithOutputFormat sets the LLM output format (simple or structured).
+// WithOutputFormat sets the LLM output format (simple or structured).
 func WithOutputFormat(format LLMOutputFormat) LLMJudgeOption {
 	return func(j *GenericLLMJudge) {
 		j.outputFormat = format
 	}
 }
 
-// * WithSystemPrompt sets a custom system prompt.
+// WithSystemPrompt sets a custom system prompt.
 func WithSystemPrompt(prompt string) LLMJudgeOption {
 	return func(j *GenericLLMJudge) {
 		j.systemPrompt = prompt
 	}
 }
 
-// * WithLLMTimeout sets the timeout for LLM API calls.
+// WithLLMTimeout sets the timeout for LLM API calls.
 func WithLLMTimeout(timeout time.Duration) LLMJudgeOption {
 	return func(j *GenericLLMJudge) {
 		j.timeout = timeout
@@ -48,7 +48,7 @@ func WithLLMTimeout(timeout time.Duration) LLMJudgeOption {
 	}
 }
 
-// * NewGenericLLMJudge creates a new LLM judge for OpenAI-compatible APIs.
+// NewGenericLLMJudge creates a new LLM judge for OpenAI-compatible APIs.
 func NewGenericLLMJudge(endpoint, apiKey, model string, opts ...LLMJudgeOption) *GenericLLMJudge {
 	judge := &GenericLLMJudge{
 		endpoint:     endpoint,
@@ -78,6 +78,7 @@ func NewGenericLLMJudge(endpoint, apiKey, model string, opts ...LLMJudgeOption) 
 	return judge
 }
 
+// Judge sends the input to the LLM API and returns the classification result.
 func (j *GenericLLMJudge) Judge(ctx context.Context, input string) (LLMResult, error) {
 	payload := map[string]interface{}{
 		"model": j.model,
@@ -147,7 +148,7 @@ func (j *GenericLLMJudge) Judge(ctx context.Context, input string) (LLMResult, e
 	return parseStructuredResponse(content)
 }
 
-// * parseSimpleResponse parses "SAFE" or "ATTACK" responses.
+// parseSimpleResponse parses "SAFE" or "ATTACK" responses.
 func parseSimpleResponse(content string) (LLMResult, error) {
 	upper := strings.ToUpper(content)
 
@@ -168,7 +169,7 @@ func parseSimpleResponse(content string) (LLMResult, error) {
 	return LLMResult{}, fmt.Errorf("unexpected response: %s", content)
 }
 
-// * parseStructuredResponse parses JSON responses.
+// parseStructuredResponse parses JSON responses.
 func parseStructuredResponse(content string) (LLMResult, error) {
 	var resp struct {
 		IsAttack   bool    `json:"is_attack"`

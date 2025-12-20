@@ -8,10 +8,10 @@ import (
 	"unicode"
 )
 
-// * ObfuscationDetector detects obfuscated or encoded malicious payloads.
+// ObfuscationDetector detects obfuscated or encoded malicious payloads.
 type ObfuscationDetector struct{}
 
-// * Compiled regex patterns for obfuscation detection
+// Compiled regex patterns for obfuscation detection
 var (
 	// * Base64-like encoded strings (long alphanumeric sequences)
 	base64Re = regexp.MustCompile(`[A-Za-z0-9+/]{30,}={0,2}`)
@@ -26,6 +26,7 @@ var (
 	excessiveSpecialRe = regexp.MustCompile(`[^a-zA-Z0-9\s]{20,}`)
 )
 
+// NewObfuscationDetector creates a new obfuscation detector.
 func NewObfuscationDetector() *ObfuscationDetector {
 	return &ObfuscationDetector{}
 }
@@ -133,7 +134,7 @@ func (d *ObfuscationDetector) Detect(ctx context.Context, input string) Result {
 	}
 }
 
-// * isLikelyBase64 checks if a string is likely valid base64
+// isLikelyBase64 checks if a string is likely valid base64
 func isLikelyBase64(s string) bool {
 	//* Try to decode
 	decoded, err := base64.StdEncoding.DecodeString(s)
@@ -157,7 +158,7 @@ func isLikelyBase64(s string) bool {
 	return false
 }
 
-// * hasZeroWidthChars detects zero-width unicode characters
+// hasZeroWidthChars detects zero-width unicode characters
 func hasZeroWidthChars(s string) bool {
 	zeroWidthChars := []rune{
 		'\u200B', // * Zero Width Space
@@ -177,7 +178,7 @@ func hasZeroWidthChars(s string) bool {
 	return false
 }
 
-// * countHomoglyphs counts suspicious lookalike characters (Cyrillic/Greek that look like Latin)
+// countHomoglyphs counts suspicious lookalike characters (Cyrillic/Greek that look like Latin)
 func countHomoglyphs(s string) int {
 	count := 0
 	//*	 Common homoglyphs: Cyrillic/Greek letters that look like Latin

@@ -5,13 +5,14 @@ import (
 	"time"
 )
 
-// * LLMDetector is a detector that uses an LLM to classify inputs.
-// * This is the most accurate but slowest and most expensive detection method.
+// LLMDetector is a detector that uses an LLM to classify inputs.
+// This is the most accurate but slowest and most expensive detection method.
 type LLMDetector struct {
 	judge   LLMJudge
 	timeout time.Duration
 }
 
+// NewLLMDetector creates a new LLM detector with default timeout (10 seconds).
 func NewLLMDetector(judge LLMJudge) *LLMDetector {
 	return &LLMDetector{
 		judge:   judge,
@@ -19,6 +20,7 @@ func NewLLMDetector(judge LLMJudge) *LLMDetector {
 	}
 }
 
+// NewLLMDetectorWithTimeout creates a new LLM detector with custom timeout.
 func NewLLMDetectorWithTimeout(judge LLMJudge, timeout time.Duration) *LLMDetector {
 	return &LLMDetector{
 		judge:   judge,
@@ -26,6 +28,7 @@ func NewLLMDetectorWithTimeout(judge LLMJudge, timeout time.Duration) *LLMDetect
 	}
 }
 
+// Detect analyzes the input using the LLM judge and returns a detection result.
 func (d *LLMDetector) Detect(ctx context.Context, input string) Result {
 	ctx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()

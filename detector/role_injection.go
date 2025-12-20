@@ -5,11 +5,11 @@ import (
 	"regexp"
 )
 
-// * RoleInjectionDetector detects role injection attacks using special tokens,
-// * XML/HTML tags, and role-switching phrases.
+// RoleInjectionDetector detects role injection attacks using special tokens,
+// XML/HTML tags, and role-switching phrases.
 type RoleInjectionDetector struct{}
 
-// * Compiled regex patterns for role injection detection
+// Compiled regex patterns for role injection detection
 var (
 	//* Special tokens used in model training (e.g., <|user|>, <|assistant|>)
 	specialTokensRe = regexp.MustCompile(`<\|(?:user|assistant|system|end|im_start|im_end)\|>`)
@@ -24,6 +24,7 @@ var (
 	conversationRe = regexp.MustCompile(`(?i)(user|assistant|system):\s+`)
 )
 
+// NewRoleInjectionDetector creates a new role injection detector.
 func NewRoleInjectionDetector() *RoleInjectionDetector {
 	return &RoleInjectionDetector{}
 }

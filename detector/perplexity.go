@@ -6,13 +6,13 @@ import (
 	"unicode"
 )
 
-// * PerplexityDetector detects unnatural text patterns using character bigram analysis.
-// * Catches adversarial suffixes, AI-generated attacks, and unusual word combinations.
+// PerplexityDetector detects unnatural text patterns using character bigram analysis.
+// Catches adversarial suffixes, AI-generated attacks, and unusual word combinations.
 type PerplexityDetector struct {
 	threshold float64 //* Ratio of rare bigrams that triggers detection
 }
 
-// * Common English character bigrams (frequent pairs)
+// Common English character bigrams (frequent pairs)
 var commonBigrams = map[string]bool{
 	"th": true, "he": true, "in": true, "er": true, "an": true,
 	"re": true, "on": true, "at": true, "en": true, "nd": true,
@@ -30,6 +30,7 @@ var commonBigrams = map[string]bool{
 	" s": true, " h": true, " b": true, " f": true, " m": true,
 }
 
+// NewPerplexityDetector creates a new perplexity detector with default threshold (0.45).
 func NewPerplexityDetector() *PerplexityDetector {
 	return &PerplexityDetector{
 		threshold: 0.45, //* 45% rare bigrams triggers detection
@@ -115,7 +116,7 @@ func (d *PerplexityDetector) Detect(ctx context.Context, input string) Result {
 	}
 }
 
-// * calculateRareBigramRatio calculates the ratio of rare character bigrams to total bigrams.
+// calculateRareBigramRatio calculates the ratio of rare character bigrams to total bigrams.
 func calculateRareBigramRatio(s string) float64 {
 	if len(s) < 2 {
 		return 0.0
@@ -147,7 +148,7 @@ func calculateRareBigramRatio(s string) float64 {
 	return float64(rareBigrams) / float64(totalBigrams)
 }
 
-// * findConsecutiveConsonants finds clusters of 4+ consonants (unusual in English).
+// findConsecutiveConsonants finds clusters of 4+ consonants (unusual in English).
 func findConsecutiveConsonants(s string) []string {
 	var clusters []string
 	consonants := "bcdfghjklmnpqrstvwxyz"
@@ -171,7 +172,7 @@ func findConsecutiveConsonants(s string) []string {
 	return clusters
 }
 
-// * calculateNonAlphabeticRatio calculates ratio of non-alphabetic chars (excluding spaces).
+// calculateNonAlphabeticRatio calculates ratio of non-alphabetic chars (excluding spaces).
 func calculateNonAlphabeticRatio(s string) float64 {
 	if len(s) == 0 {
 		return 0.0
@@ -187,24 +188,24 @@ func calculateNonAlphabeticRatio(s string) float64 {
 	return float64(nonAlpha) / float64(len(s))
 }
 
-// * isAlphaOrSpace checks if character is alphabetic or space.
+// isAlphaOrSpace checks if character is alphabetic or space.
 func isAlphaOrSpace(c byte) bool {
 	return (c >= 'a' && c <= 'z') || c == ' '
 }
 
-// * formatPerplexityMatch creates human-readable description.
+// formatPerplexityMatch creates human-readable description.
 func formatPerplexityMatch(ratio float64) string {
 	percentage := int(ratio * 100)
 	return "Rare character bigrams: " + itoa(percentage) + "%"
 }
 
-// * formatNonAlphaMatch creates human-readable description for non-alphabetic ratio.
+// formatNonAlphaMatch creates human-readable description for non-alphabetic ratio.
 func formatNonAlphaMatch(ratio float64) string {
 	percentage := int(ratio * 100)
 	return "Non-alphabetic characters: " + itoa(percentage) + "%"
 }
 
-// * minInt returns minimum of two integers.
+// minInt returns minimum of two integers.
 func minInt(a, b int) int {
 	if a < b {
 		return a

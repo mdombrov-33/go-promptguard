@@ -2,15 +2,15 @@ package detector
 
 import "context"
 
-// * MultiDetector combines multiple detectors and aggregates their results.
+// MultiDetector combines multiple detectors and aggregates their results.
 type MultiDetector struct {
 	detectors []Detector
 	config    Config
 }
 
-// * New creates a new MultiDetector with the given configuration options.
-// * By default, all implemented detectors are enabled with a threshold of 0.7.
-// * Example:
+// New creates a new MultiDetector with the given configuration options.
+// By default, all implemented detectors are enabled with a threshold of 0.7.
+// Example:
 // *	guard := detector.New(
 // *	    detector.WithThreshold(0.8),
 // *	    detector.WithRoleInjection(true),
@@ -64,12 +64,12 @@ func New(opts ...Option) *MultiDetector {
 	return md
 }
 
-// * Detect runs all enabled detectors and combines their results.
-// * Risk scoring algorithm:
-// *   - Takes the highest individual risk score from any detector
-// *   - Adds a 0.1 bonus for each additional pattern detected (capped at 1.0)
-// *   - Confidence is averaged across all detectors
-// * The input is considered unsafe if the final risk score >= threshold.
+// Detect runs all enabled detectors and combines their results.
+// Risk scoring algorithm:
+//   - Takes the highest individual risk score from any detector
+//   - Adds a 0.1 bonus for each additional pattern detected (capped at 1.0)
+//   - Confidence is averaged across all detectors
+// The input is considered unsafe if the final risk score >= threshold.
 func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 	if md.config.MaxInputLength > 0 && len(input) > md.config.MaxInputLength {
 		input = input[:md.config.MaxInputLength]
