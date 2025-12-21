@@ -24,17 +24,22 @@ Built on research from Microsoft's LLMail-Inject dataset (370k+ real attacks) an
 
 ## Install
 
+**Library (for Go projects):**
+
 ```bash
 go get github.com/mdombrov-33/go-promptguard
 ```
 
-**CLI:**
+**CLI (standalone tool):**
 
+If you have Go 1.21+:
 ```bash
 go install github.com/mdombrov-33/go-promptguard/cmd/go-promptguard@latest
 ```
 
-Or download binaries from [releases](#) (coming soon).
+This installs `go-promptguard` to `$GOPATH/bin` (usually `~/go/bin`). Make sure it's in your `$PATH`.
+
+If you don't have Go, download pre-built binaries from [releases](https://github.com/mdombrov-33/go-promptguard/releases) (coming soon).
 
 ## Usage
 
