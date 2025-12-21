@@ -201,11 +201,23 @@ func (m *model) updateGuard() {
 		var judge detector.LLMJudge
 		switch m.llmProvider {
 		case "openai":
-			judge = detector.NewOpenAIJudge(os.Getenv("OPENAI_API_KEY"), "gpt-5")
+			model := os.Getenv("OPENAI_MODEL")
+			if model == "" {
+				model = "gpt-5"
+			}
+			judge = detector.NewOpenAIJudge(os.Getenv("OPENAI_API_KEY"), model)
 		case "openrouter":
-			judge = detector.NewOpenRouterJudge(os.Getenv("OPENROUTER_API_KEY"), "anthropic/claude-sonnet-4.5")
+			model := os.Getenv("OPENROUTER_MODEL")
+			if model == "" {
+				model = "anthropic/claude-sonnet-4.5"
+			}
+			judge = detector.NewOpenRouterJudge(os.Getenv("OPENROUTER_API_KEY"), model)
 		case "anthropic":
-			judge = detector.NewAnthropicJudge(os.Getenv("ANTHROPIC_API_KEY"), "claude-sonnet-4-5-20250929")
+			model := os.Getenv("ANTHROPIC_MODEL")
+			if model == "" {
+				model = "claude-sonnet-4-5-20250929"
+			}
+			judge = detector.NewAnthropicJudge(os.Getenv("ANTHROPIC_API_KEY"), model)
 		case "ollama":
 			ollamaHost := os.Getenv("OLLAMA_HOST")
 			if ollamaHost == "" {
@@ -214,7 +226,7 @@ func (m *model) updateGuard() {
 
 			ollamaModel := os.Getenv("OLLAMA_MODEL")
 			if ollamaModel == "" {
-				ollamaModel = "llama3.1" // Default fallback
+				ollamaModel = "llama3.3" // Default fallback
 			}
 
 			if ollamaHost != "" {
