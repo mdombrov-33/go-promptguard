@@ -39,7 +39,7 @@ go install github.com/mdombrov-33/go-promptguard/cmd/go-promptguard@latest
 
 This installs `go-promptguard` to `$GOPATH/bin` (usually `~/go/bin`). Make sure it's in your `$PATH`.
 
-If you don't have Go, download pre-built binaries from [releases](https://github.com/mdombrov-33/go-promptguard/releases) (coming soon).
+If you don't have Go, download pre-built binaries from [releases](https://github.com/mdombrov-33/go-promptguard/releases).
 
 ## Usage
 
@@ -240,7 +240,7 @@ Think of this as one layer in your security stack, not the entire solution.
 
 - [x] Core detection library
 - [x] CLI tool (interactive TUI, check, batch, server)
-- [ ] Pre-built binaries for Linux/macOS/Windows
+- [x] Pre-built binaries for Linux/macOS/Windows
 - [ ] Prometheus metrics
 - [ ] Framework integrations (Gin, Echo, gRPC middleware)
 - [ ] Additional attack patterns (jailbreak techniques, payload splitting)
