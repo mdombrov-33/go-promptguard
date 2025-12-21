@@ -1,0 +1,15 @@
+# Build artifacts
+bin/
+
+# Batch processing results
+batch_results/
+
+# Test input files
+testdata
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
