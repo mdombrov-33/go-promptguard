@@ -226,7 +226,7 @@ func (m *model) updateGuard() {
 
 			ollamaModel := os.Getenv("OLLAMA_MODEL")
 			if ollamaModel == "" {
-				ollamaModel = "llama3.3" // Default fallback
+				ollamaModel = "llama3.1"
 			}
 
 			if ollamaHost != "" {
