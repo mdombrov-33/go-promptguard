@@ -878,11 +878,11 @@ func (m model) viewAbout() string {
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, title))
 	s.WriteString("\n\n")
 
-	content := `go-promptguard
+	content := fmt.Sprintf(`go-promptguard
 
 Prompt injection detection library for Go
 
-Version: 0.1.0
+Version: %s
 Repository: github.com/mdombrov-33/go-promptguard
 
 Detectors:
@@ -894,7 +894,7 @@ Detectors:
   • Perplexity Analysis
   • Token Anomaly
   • LLM Judge (optional)
-`
+`, version)
 
 	panel := panelStyle.Width(70).Render(content)
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, panel))
