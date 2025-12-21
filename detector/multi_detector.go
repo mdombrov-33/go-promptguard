@@ -1,6 +1,9 @@
 package detector
 
-import "context"
+import (
+	"context"
+	"math"
+)
 
 // MultiDetector combines multiple detectors and aggregates their results.
 type MultiDetector struct {
@@ -97,6 +100,11 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 
 		result := d.Detect(ctx, input)
 
+		// Round pattern scores to avoid floating point precision issues
+		for i := range result.DetectedPatterns {
+			result.DetectedPatterns[i].Score = round(result.DetectedPatterns[i].Score, 2)
+		}
+
 		allPatterns = append(allPatterns, result.DetectedPatterns...)
 
 		if result.RiskScore > maxScore {
@@ -158,6 +166,11 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		llmDetector := NewLLMDetector(md.config.LLMJudge)
 		llmResult := llmDetector.Detect(ctx, input)
 
+		// Round LLM pattern scores
+		for i := range llmResult.DetectedPatterns {
+			llmResult.DetectedPatterns[i].Score = round(llmResult.DetectedPatterns[i].Score, 2)
+		}
+
 		allPatterns = append(allPatterns, llmResult.DetectedPatterns...)
 
 		if llmResult.RiskScore > maxScore {
@@ -192,8 +205,8 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 
 	return Result{
 		Safe:             finalScore < md.config.Threshold,
-		RiskScore:        finalScore,
-		Confidence:       finalConfidence,
+		RiskScore:        round(finalScore, 2),
+		Confidence:       round(finalConfidence, 2),
 		DetectedPatterns: allPatterns,
 	}
 }
@@ -203,4 +216,9 @@ func min(a, b float64) float64 {
 		return a
 	}
 	return b
+}
+
+func round(val float64, precision int) float64 {
+	ratio := math.Pow(10, float64(precision))
+	return math.Round(val*ratio) / ratio
 }

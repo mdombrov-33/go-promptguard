@@ -28,12 +28,15 @@ var commonBigrams = map[string]bool{
 	"e ": true, "t ": true, "d ": true, "s ": true, "n ": true,
 	" t": true, " a": true, " i": true, " o": true, " w": true,
 	" s": true, " h": true, " b": true, " f": true, " m": true,
+	// * Technical/common abbreviations
+	"tt": true, "tp": true, "ip": true, "ow": true, "wo": true,
+	"do": true, "oe": true, "ho": true, "cp": true, "tc": true,
 }
 
-// NewPerplexityDetector creates a new perplexity detector with default threshold (0.45).
+// NewPerplexityDetector creates a new perplexity detector with default threshold (0.60).
 func NewPerplexityDetector() *PerplexityDetector {
 	return &PerplexityDetector{
-		threshold: 0.45, //* 45% rare bigrams triggers detection
+		threshold: 0.60, //* 60% rare bigrams triggers detection
 	}
 }
 
