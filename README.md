@@ -32,7 +32,7 @@ go get github.com/mdombrov-33/go-promptguard
 
 **CLI (standalone tool):**
 
-If you have Go 1.21+:
+If you have Go 1.24+:
 ```bash
 go install github.com/mdombrov-33/go-promptguard/cmd/go-promptguard@latest
 ```

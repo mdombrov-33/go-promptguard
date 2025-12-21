@@ -1,5 +1,6 @@
 # Build artifacts
 bin/
+dist/
 
 # Batch processing results
 batch_results/
