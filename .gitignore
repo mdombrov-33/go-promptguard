@@ -8,6 +8,11 @@ batch_results/
 # Test input files
 testdata
 
+# Benchmark artifacts
+*.prof
+*.test
+benchmarks/*.txt
+
 # Environment variables
 .env
 
