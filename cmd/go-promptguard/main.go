@@ -40,8 +40,12 @@ var versionCmd = &cobra.Command{
 	Short: "Print version information",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("go-promptguard %s\n", version)
-		fmt.Printf("commit: %s\n", commit)
-		fmt.Printf("built: %s\n", date)
+		if commit != "none" && commit != "" {
+			fmt.Printf("commit: %s\n", commit)
+		}
+		if date != "unknown" && date != "" {
+			fmt.Printf("built: %s\n", date)
+		}
 	},
 }
 
