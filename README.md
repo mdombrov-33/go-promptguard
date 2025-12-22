@@ -159,8 +159,8 @@ guard := detector.New(
     detector.WithLLM(judge, detector.LLMConditional),
 )
 
-// Ollama - use any local model (llama3.1, llama3.3, mistral, qwen, etc.)
-judge := detector.NewOllamaJudge("llama3.1")  // 8B model, runs on 8GB RAM
+// Ollama - use any local model (llama3.1:8b, llama3.3:70b, mistral, qwen, etc.)
+judge := detector.NewOllamaJudge("llama3.1:8b")  // 8B model, runs on 8GB RAM
 guard := detector.New(
     detector.WithLLM(judge, detector.LLMFallback),
 )
@@ -201,9 +201,9 @@ OPENROUTER_API_KEY=sk-or-...
 OPENROUTER_MODEL=anthropic/claude-sonnet-4.5
 
 # Ollama (local, no API key needed)
-# Defaults to llama3.1 (8B, most common, runs on 8GB RAM)
+# Defaults to llama3.1:8b (most common, runs on 8GB RAM)
 # For better quality: OLLAMA_MODEL=llama3.3:70b-instruct-q2_K (needs 32GB+ RAM)
-OLLAMA_MODEL=llama3.1
+OLLAMA_MODEL=llama3.1:8b
 OLLAMA_HOST=http://localhost:11434
 ```
 

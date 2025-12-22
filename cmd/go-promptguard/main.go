@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
@@ -45,6 +46,15 @@ var versionCmd = &cobra.Command{
 }
 
 func init() {
+	// If version wasn't set via ldflags, try to get it from build info
+	if version == "dev" {
+		if info, ok := debug.ReadBuildInfo(); ok {
+			if info.Main.Version != "" && info.Main.Version != "(devel)" {
+				version = info.Main.Version
+			}
+		}
+	}
+
 	rootCmd.AddCommand(versionCmd)
 }
 
