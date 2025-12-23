@@ -179,24 +179,14 @@ guard := detector.New(
 
 **Setup (optional - for LLM features):**
 
-Create a `.env` file in your project directory:
+Copy `.env.example` to `.env` and add your API keys:
 
 ```bash
-# OpenAI (defaults to gpt-5 if not set)
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-5
-
-# OpenRouter (defaults to anthropic/claude-sonnet-4.5 if not set)
-# Provides access to Claude, Gemini, and other models
-OPENROUTER_API_KEY=sk-or-...
-OPENROUTER_MODEL=anthropic/claude-sonnet-4.5
-
-# Ollama (local, no API key needed)
-# Defaults to llama3.1:8b (most common, runs on 8GB RAM)
-# For better quality: OLLAMA_MODEL=llama3.3:70b-instruct-q2_K (needs 32GB+ RAM)
-OLLAMA_MODEL=llama3.1:8b
-OLLAMA_HOST=http://localhost:11434
+cp .env.example .env
+# Edit .env and add your API keys
 ```
+
+See [`.env.example`](.env.example) for all configuration options.
 
 Or set environment variables:
 
