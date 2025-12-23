@@ -130,12 +130,6 @@ func initialModel() model {
 			defaultProvider = "openrouter"
 		}
 	}
-	if os.Getenv("ANTHROPIC_API_KEY") != "" {
-		availableProviders = append(availableProviders, "anthropic")
-		if defaultProvider == "none" {
-			defaultProvider = "anthropic"
-		}
-	}
 	availableProviders = append(availableProviders, "ollama")
 	if defaultProvider == "none" {
 		defaultProvider = "ollama"
@@ -212,12 +206,6 @@ func (m *model) updateGuard() {
 				model = "anthropic/claude-sonnet-4.5"
 			}
 			judge = detector.NewOpenRouterJudge(os.Getenv("OPENROUTER_API_KEY"), model)
-		case "anthropic":
-			model := os.Getenv("ANTHROPIC_MODEL")
-			if model == "" {
-				model = "claude-sonnet-4-5-20250929"
-			}
-			judge = detector.NewAnthropicJudge(os.Getenv("ANTHROPIC_API_KEY"), model)
 		case "ollama":
 			ollamaHost := os.Getenv("OLLAMA_HOST")
 			if ollamaHost == "" {
@@ -863,6 +851,29 @@ func (m model) viewSettings() string {
 	}
 	content.WriteString(selector(10, fmt.Sprintf("[0] Provider             %s", providerDisplay)) + "\n")
 
+	// Show active model for current provider
+	if m.llmProvider != "none" {
+		var modelName string
+		switch m.llmProvider {
+		case "openai":
+			modelName = os.Getenv("OPENAI_MODEL")
+			if modelName == "" {
+				modelName = "gpt-5 (default)"
+			}
+		case "openrouter":
+			modelName = os.Getenv("OPENROUTER_MODEL")
+			if modelName == "" {
+				modelName = "anthropic/claude-sonnet-4.5 (default)"
+			}
+		case "ollama":
+			modelName = os.Getenv("OLLAMA_MODEL")
+			if modelName == "" {
+				modelName = "llama3.1:8b (default)"
+			}
+		}
+		content.WriteString(lipgloss.NewStyle().Foreground(mutedColor).Render(fmt.Sprintf("      Model: %s\n", modelName)))
+	}
+
 	if len(m.availableProviders) > 1 {
 		capitalizedProviders := make([]string, len(m.availableProviders))
 		for i, p := range m.availableProviders {
@@ -997,8 +1008,6 @@ func capitalizeProviderName(p string) string {
 		return "OpenAI"
 	case "openrouter":
 		return "OpenRouter"
-	case "anthropic":
-		return "Anthropic"
 	case "ollama":
 		return "Ollama"
 	case "none":

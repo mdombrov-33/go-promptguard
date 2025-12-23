@@ -47,15 +47,3 @@ func NewOllamaJudgeWithEndpoint(endpoint, model string, opts ...LLMJudgeOption) 
 	)
 }
 
-// NewAnthropicJudge creates an LLM judge for Anthropic API.
-// Note: Anthropic's API format differs slightly from OpenAI.
-// Consider using OpenRouter for Anthropic models instead.
-// Recommended models: claude-sonnet-4-5-20250929, claude-haiku-4-5-20251001
-func NewAnthropicJudge(apiKey, model string, opts ...LLMJudgeOption) LLMJudge {
-	return NewGenericLLMJudge(
-		"https://api.anthropic.com/v1/messages",
-		apiKey,
-		model,
-		opts...,
-	)
-}

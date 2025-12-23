@@ -147,13 +147,7 @@ guard := detector.New(
     detector.WithLLM(judge, detector.LLMConditional),
 )
 
-// Anthropic - use any model (claude-3-opus, claude-3-sonnet, etc.)
-judge := detector.NewAnthropicJudge(apiKey, "claude-3-opus-20240229")
-guard := detector.New(
-    detector.WithLLM(judge, detector.LLMAlways),
-)
-
-// OpenRouter - use any provider/model combo
+// OpenRouter - use any provider/model combo (including Claude via anthropic/...)
 judge := detector.NewOpenRouterJudge(apiKey, "anthropic/claude-sonnet-4.5")
 guard := detector.New(
     detector.WithLLM(judge, detector.LLMConditional),
@@ -192,11 +186,8 @@ Create a `.env` file in your project directory:
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-5
 
-# Anthropic (defaults to claude-sonnet-4-5-20250929 if not set)
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
-
 # OpenRouter (defaults to anthropic/claude-sonnet-4.5 if not set)
+# Provides access to Claude, Gemini, and other models
 OPENROUTER_API_KEY=sk-or-...
 OPENROUTER_MODEL=anthropic/claude-sonnet-4.5
 

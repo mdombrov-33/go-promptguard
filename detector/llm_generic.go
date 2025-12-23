@@ -86,7 +86,7 @@ func (j *GenericLLMJudge) Judge(ctx context.Context, input string) (LLMResult, e
 			{"role": "system", "content": j.systemPrompt},
 			{"role": "user", "content": buildUserPrompt(input)},
 		},
-		"temperature": 0, //* Deterministic output
+		"temperature": 1,
 	}
 
 	//* If structured mode, request JSON response

@@ -140,7 +140,7 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 	} else {
 		// No detections after checking all detectors = high confidence it's safe
 		// More detectors enabled = higher confidence
-		finalConfidence = 0.85 + (0.05 * float64(len(md.detectors)) / 7.0)
+		finalConfidence = 0.95 + (0.05 * float64(len(md.detectors)) / 7.0)
 		if finalConfidence > 1.0 {
 			finalConfidence = 1.0
 		}
@@ -199,7 +199,7 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 			}
 		} else {
 			// Still no detections even after LLM check = very high confidence it's safe
-			finalConfidence = 0.90
+			finalConfidence = 1.0
 		}
 	}
 
