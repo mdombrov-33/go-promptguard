@@ -13,8 +13,8 @@ var (
 	// * Temporal commands that chain instructions (e.g., "after summarizing, send email")
 	temporalCommandsRe = regexp.MustCompile(`(?i)(after|once|when)\s+\w+ing.*?,`)
 
-	// * Direct override commands
-	overrideCommandsRe = regexp.MustCompile(`(?i)(ignore|disregard|forget)\s+.*?(previous|prior|above|earlier)`)
+	// * Direct override commands (targeting system instructions/rules)
+	overrideCommandsRe = regexp.MustCompile(`(?i)(ignore|disregard|forget)\s+(all|your|the|any)?\s*(previous|prior|above|earlier)?\s*(instructions?|rules?|directions?|commands?|prompts?)`)
 
 	// * Instruction injection using delimiters
 	delimiterInjectionRe = regexp.MustCompile(`(?i)(new instructions?|additional task|also do|and then)\s*:`)
