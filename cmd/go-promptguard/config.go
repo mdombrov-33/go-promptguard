@@ -4,20 +4,26 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+
+	"github.com/mdombrov-33/go-promptguard/detector"
 )
 
 type SavedConfig struct {
-	Threshold          float64 `json:"threshold"`
-	EnableRoleInj      bool    `json:"enable_role_injection"`
-	EnablePromptLeak   bool    `json:"enable_prompt_leak"`
-	EnableInstOverride bool    `json:"enable_instruction_override"`
-	EnableObfuscation  bool    `json:"enable_obfuscation"`
-	EnableEntropy      bool    `json:"enable_entropy"`
-	EnablePerp         bool    `json:"enable_perplexity"`
-	EnableToken        bool    `json:"enable_token_anomaly"`
-	EnableLLM          bool    `json:"enable_llm"`
-	LLMMode            int     `json:"llm_mode"`
-	LLMProvider        string  `json:"llm_provider"`
+	Threshold          float64                `json:"threshold"`
+	EnableRoleInj      bool                   `json:"enable_role_injection"`
+	EnablePromptLeak   bool                   `json:"enable_prompt_leak"`
+	EnableInstOverride bool                   `json:"enable_instruction_override"`
+	EnableObfuscation  bool                   `json:"enable_obfuscation"`
+	EnableNorm         bool                   `json:"enable_normalization"`
+	NormMode           detector.DetectionMode `json:"norm_mode"`
+	EnableDelim        bool                   `json:"enable_delimiter"`
+	DelimMode          detector.DetectionMode `json:"delim_mode"`
+	EnableEntropy      bool                   `json:"enable_entropy"`
+	EnablePerp         bool                   `json:"enable_perplexity"`
+	EnableToken        bool                   `json:"enable_token_anomaly"`
+	EnableLLM          bool                   `json:"enable_llm"`
+	LLMMode            int                    `json:"llm_mode"`
+	LLMProvider        string                 `json:"llm_provider"`
 }
 
 func getConfigPath() (string, error) {
@@ -39,6 +45,10 @@ func saveConfig(m *model) error {
 		EnablePromptLeak:   m.enablePromptLeak,
 		EnableInstOverride: m.enableInstOverride,
 		EnableObfuscation:  m.enableObfuscation,
+		EnableNorm:         m.enableNorm,
+		NormMode:           m.normMode,
+		EnableDelim:        m.enableDelim,
+		DelimMode:          m.delimMode,
 		EnableEntropy:      m.enableEntropy,
 		EnablePerp:         m.enablePerp,
 		EnableToken:        m.enableToken,

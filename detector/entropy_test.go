@@ -25,7 +25,7 @@ func TestEntropyDetector_HighEntropyInputs(t *testing.T) {
 		{
 			name:           "hex encoded string",
 			input:          "48656c6c6f20776f726c642074686973206973206120746573742073747261696e672077697468206869676820656e74726f7079",
-			shouldBeUnsafe: false, //* Hex has lower entropy (4.0 bits) than threshold (4.5)
+			shouldBeUnsafe: false, // Hex has lower entropy (4.0 bits) than threshold (4.5)
 		},
 		{
 			name:           "random characters",
@@ -35,7 +35,7 @@ func TestEntropyDetector_HighEntropyInputs(t *testing.T) {
 		{
 			name:           "mixed case alphanumeric (high randomness)",
 			input:          "Zm9yIGV2ZXJ5IHBhdHRlcm4gd2UgY2FuIGNyZWF0ZSBhIGhpZ2ggZW50cm9weSB0ZXN0IGNhc2U=",
-			shouldBeUnsafe: false, //* Base64 has ~4.7 bits entropy, may not exceed 4.5 threshold consistently
+			shouldBeUnsafe: false, // Base64 has ~4.7 bits entropy, may not exceed 4.5 threshold consistently
 		},
 		{
 			name:           "url safe base64",
@@ -119,7 +119,7 @@ func TestEntropyDetector_EdgeCases(t *testing.T) {
 
 	t.Run("numbers only", func(t *testing.T) {
 		result := detector.Detect(ctx, "12345678901234567890")
-		//* Numbers have lower entropy than random chars
+		// Numbers have lower entropy than random chars
 		assert.True(t, result.Safe, "Numbers should be safe")
 	})
 
@@ -134,12 +134,12 @@ func TestEntropyDetector_BoundaryThresholds(t *testing.T) {
 	detector := NewEntropyDetector()
 	ctx := context.Background()
 
-	//* Test input just above threshold
+	// Test input just above threshold
 	t.Run("just above threshold", func(t *testing.T) {
-		//* Create input with controlled entropy
+		// Create input with controlled entropy
 		input := "aB3xK9mQ2wP7zL5nR4tY8jF6vC1hD0sG3uE9"
 		result := detector.Detect(ctx, input)
-		//* Should trigger detection
+		// Should trigger detection
 		assert.False(t, result.Safe, "High entropy should be unsafe")
 	})
 }
@@ -149,9 +149,9 @@ func TestEntropyDetector_ConfidenceScaling(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name               string
-		input              string
-		minConfidence      float64
+		name          string
+		input         string
+		minConfidence float64
 	}{
 		{
 			name:          "short high-entropy input (50 chars)",
@@ -180,16 +180,16 @@ func TestEntropyDetector_ConfidenceScaling(t *testing.T) {
 }
 
 func TestEntropyDetector_CustomThreshold(t *testing.T) {
-	//* Create detector with very low threshold
+	// Create detector with very low threshold
 	detector := NewEntropyDetectorWithThreshold(3.0)
 	ctx := context.Background()
 
-	//* Normal text might trigger with low threshold
+	// Normal text might trigger with low threshold
 	input := "This is relatively normal text but with lower entropy threshold"
 	result := detector.Detect(ctx, input)
 
-	//* With lower threshold, more inputs will be flagged
-	//* (exact result depends on text entropy)
+	// With lower threshold, more inputs will be flagged
+	// (exact result depends on text entropy)
 	assert.NotNil(t, result)
 }
 

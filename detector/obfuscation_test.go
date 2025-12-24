@@ -124,7 +124,7 @@ func TestObfuscationDetector_ExcessiveSpecialChars(t *testing.T) {
 	detector := NewObfuscationDetector()
 	ctx := context.Background()
 
-	// * String with 25+ special characters
+	// String with 25+ special characters
 	input := "!@#$%^&*()_+-=[]{}|;':,.<>?/~`"
 
 	result := detector.Detect(ctx, input)
@@ -177,8 +177,8 @@ func TestObfuscationDetector_Homoglyphs(t *testing.T) {
 	detector := NewObfuscationDetector()
 	ctx := context.Background()
 
-	// * Using Cyrillic characters that look like Latin
-	// * "admin" but with Cyrillic 'a' (U+0430) and 'o' (U+043E)
+	// Using Cyrillic characters that look like Latin
+	// "admin" but with Cyrillic 'a' (U+0430) and 'o' (U+043E)
 	input := "аdmin mоde"
 
 	result := detector.Detect(ctx, input)

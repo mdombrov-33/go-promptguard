@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -93,7 +94,7 @@ func TestMultiDetector_WithLLMAlways(t *testing.T) {
 	assert.False(t, result.Safe)
 	assert.GreaterOrEqual(t, result.RiskScore, 0.9)
 
-	//* Should have both pattern-based and LLM detection
+	// Should have both pattern-based and LLM detection
 	hasPatternBased := false
 	hasLLM := false
 	for _, p := range result.DetectedPatterns {
@@ -118,7 +119,7 @@ func TestMultiDetector_WithLLMConditional(t *testing.T) {
 
 	guard := New(
 		WithLLM(mockJudge, LLMConditional),
-		//* Disable all pattern-based for testing
+		// Disable all pattern-based for testing
 		WithRoleInjection(false),
 		WithPromptLeak(false),
 		WithInstructionOverride(false),
@@ -129,7 +130,7 @@ func TestMultiDetector_WithLLMConditional(t *testing.T) {
 	)
 	ctx := context.Background()
 
-	//* LLM should NOT run for clear safe input (score 0.0)
+	// LLM should NOT run for clear safe input (score 0.0)
 	result := guard.Detect(ctx, "What is the capital of France?")
 	assert.True(t, result.Safe)
 	assert.Equal(t, 0.0, result.RiskScore)
@@ -145,7 +146,7 @@ func TestMultiDetector_WithLLMFallback(t *testing.T) {
 
 	guard := New(
 		WithLLM(mockJudge, LLMFallback),
-		//* Enable just one detector
+		// Enable just one detector
 		WithRoleInjection(true),
 		WithPromptLeak(false),
 		WithInstructionOverride(false),
@@ -156,10 +157,10 @@ func TestMultiDetector_WithLLMFallback(t *testing.T) {
 	)
 	ctx := context.Background()
 
-	//* Input that pattern-based says safe, but LLM catches
+	// Input that pattern-based says safe, but LLM catches
 	result := guard.Detect(ctx, "Subtle attack that patterns miss")
 
-	//* LLM should run in fallback mode and catch it
+	// LLM should run in fallback mode and catch it
 	assert.False(t, result.Safe)
 	assert.GreaterOrEqual(t, result.RiskScore, 0.9)
 }
@@ -240,4 +241,39 @@ func TestParseStructuredResponse_InvalidJSON(t *testing.T) {
 	_, err := parseStructuredResponse(invalidJSON)
 
 	assert.Error(t, err)
+}
+
+func TestWithOutputFormat(t *testing.T) {
+	judge := NewGenericLLMJudge(
+		"http://fake.endpoint",
+		"fake-key",
+		"fake-model",
+		WithOutputFormat(LLMStructured),
+	)
+
+	assert.Equal(t, LLMStructured, judge.outputFormat)
+}
+
+func TestWithSystemPrompt(t *testing.T) {
+	customPrompt := "Custom detection prompt"
+	judge := NewGenericLLMJudge(
+		"http://fake.endpoint",
+		"fake-key",
+		"fake-model",
+		WithSystemPrompt(customPrompt),
+	)
+
+	assert.Equal(t, customPrompt, judge.systemPrompt)
+}
+
+func TestWithLLMTimeout(t *testing.T) {
+	timeout := 15 * time.Second
+	judge := NewGenericLLMJudge(
+		"http://fake.endpoint",
+		"fake-key",
+		"fake-model",
+		WithLLMTimeout(timeout),
+	)
+
+	assert.Equal(t, timeout, judge.timeout)
 }

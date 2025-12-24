@@ -5,14 +5,13 @@ import (
 	"time"
 )
 
-// LLMDetector is a detector that uses an LLM to classify inputs.
-// This is the most accurate but slowest and most expensive detection method.
+// LLMDetector is a detector that uses an LLM to classify inputs
+// This is the most accurate but slowest and most expensive detection method
 type LLMDetector struct {
 	judge   LLMJudge
 	timeout time.Duration
 }
 
-// NewLLMDetector creates a new LLM detector with default timeout (10 seconds).
 func NewLLMDetector(judge LLMJudge) *LLMDetector {
 	return &LLMDetector{
 		judge:   judge,
@@ -20,7 +19,6 @@ func NewLLMDetector(judge LLMJudge) *LLMDetector {
 	}
 }
 
-// NewLLMDetectorWithTimeout creates a new LLM detector with custom timeout.
 func NewLLMDetectorWithTimeout(judge LLMJudge, timeout time.Duration) *LLMDetector {
 	return &LLMDetector{
 		judge:   judge,
@@ -28,19 +26,18 @@ func NewLLMDetectorWithTimeout(judge LLMJudge, timeout time.Duration) *LLMDetect
 	}
 }
 
-// Detect analyzes the input using the LLM judge and returns a detection result.
 func (d *LLMDetector) Detect(ctx context.Context, input string) Result {
 	ctx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()
 
 	llmResult, err := d.judge.Judge(ctx, input)
 	if err != nil {
-		//* On error, return safe result with low confidence
+		// On error, return safe result with low confidence
 		return Result{
 			Safe:       true,
 			RiskScore:  0.0,
 			Confidence: 0.0,
-			DetectedPatterns: []DetectedPatterns{
+			DetectedPatterns: []DetectedPattern{
 				{
 					Type:    "llm_error",
 					Score:   0.0,
@@ -50,10 +47,10 @@ func (d *LLMDetector) Detect(ctx context.Context, input string) Result {
 		}
 	}
 
-	//* Convert LLMResult to Result
-	patterns := []DetectedPatterns{}
+	// Convert LLMResult to Result
+	patterns := []DetectedPattern{}
 	if llmResult.IsAttack {
-		pattern := DetectedPatterns{
+		pattern := DetectedPattern{
 			Type:  "llm_classification",
 			Score: llmResult.Confidence,
 			Matches: []string{
@@ -61,12 +58,12 @@ func (d *LLMDetector) Detect(ctx context.Context, input string) Result {
 			},
 		}
 
-		//* Add attack type if available
+		// Add attack type if available
 		if llmResult.AttackType != "" && llmResult.AttackType != "none" {
 			pattern.Type = "llm_" + llmResult.AttackType
 		}
 
-		//* Add reasoning if available
+		// Add reasoning if available
 		if llmResult.Reasoning != "" {
 			pattern.Matches = append(pattern.Matches, llmResult.Reasoning)
 		}
@@ -84,5 +81,6 @@ func (d *LLMDetector) Detect(ctx context.Context, input string) Result {
 		RiskScore:        riskScore,
 		Confidence:       llmResult.Confidence,
 		DetectedPatterns: patterns,
+		LLMResult:        &llmResult,
 	}
 }

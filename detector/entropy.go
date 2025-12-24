@@ -5,20 +5,18 @@ import (
 	"math"
 )
 
-// EntropyDetector detects high-entropy inputs indicating obfuscation or encoding.
-// Uses Shannon entropy to measure randomness - high entropy suggests base64, hex, or encrypted content.
+// EntropyDetector detects high-entropy inputs indicating obfuscation or encoding
+// Uses Shannon entropy to measure randomness - high entropy suggests base64, hex, or encrypted content
 type EntropyDetector struct {
-	threshold float64 //* Entropy threshold above which input is suspicious
+	threshold float64
 }
 
-// NewEntropyDetector creates a new entropy detector with default threshold (4.5).
 func NewEntropyDetector() *EntropyDetector {
 	return &EntropyDetector{
-		threshold: 4.5, //* Default: 4.5 out of max 8.0 (binary)
+		threshold: 4.5, // Default: 4.5 out of max 8.0 (binary)
 	}
 }
 
-// NewEntropyDetectorWithThreshold creates a new entropy detector with custom threshold.
 func NewEntropyDetectorWithThreshold(threshold float64) *EntropyDetector {
 	return &EntropyDetector{
 		threshold: threshold,
@@ -26,7 +24,7 @@ func NewEntropyDetectorWithThreshold(threshold float64) *EntropyDetector {
 }
 
 func (d *EntropyDetector) Detect(ctx context.Context, input string) Result {
-	patterns := []DetectedPatterns{}
+	patterns := []DetectedPattern{}
 	maxScore := 0.0
 
 	select {
@@ -35,7 +33,7 @@ func (d *EntropyDetector) Detect(ctx context.Context, input string) Result {
 	default:
 	}
 
-	//* Skip very short inputs (not enough data for entropy calculation)
+	// Skip very short inputs (not enough data for entropy calculation)
 	if len(input) < 20 {
 		return Result{
 			Safe:             true,
@@ -47,18 +45,18 @@ func (d *EntropyDetector) Detect(ctx context.Context, input string) Result {
 
 	entropy := calculateShannonEntropy(input)
 
-	//* Normalize entropy to 0-1 scale (max entropy is 8.0 for binary)
+	// Normalize entropy to 0-1 scale (max entropy is 8.0 for binary)
 	normalizedEntropy := entropy / 8.0
 
 	if entropy > d.threshold {
-		//* Calculate risk score based on how far above threshold
-		//* Higher entropy = higher risk
-		riskScore := 0.6 + (normalizedEntropy-0.5)*0.8 //* Maps 0.5-1.0 entropy to 0.6-1.0 risk
+		// Calculate risk score based on how far above threshold
+		// Higher entropy = higher risk
+		riskScore := 0.6 + (normalizedEntropy-0.5)*0.8 // Maps 0.5-1.0 entropy to 0.6-1.0 risk
 		if riskScore > 1.0 {
 			riskScore = 1.0
 		}
 
-		patterns = append(patterns, DetectedPatterns{
+		patterns = append(patterns, DetectedPattern{
 			Type:    "entropy_high_randomness",
 			Score:   riskScore,
 			Matches: []string{formatEntropyMatch(entropy)},
@@ -66,11 +64,10 @@ func (d *EntropyDetector) Detect(ctx context.Context, input string) Result {
 		maxScore = riskScore
 	}
 
-	// * Confidence based on risk score, with bonus for longer inputs (more reliable)
 	confidence := 0.0
 	if maxScore > 0 {
 		confidence = maxScore
-		// * Add small bonus for longer inputs (more data = more reliable)
+		// Add small bonus for longer inputs (more data = more reliable)
 		if len(input) > 100 {
 			confidence = min(confidence+0.05, 1.0)
 		}
@@ -87,20 +84,19 @@ func (d *EntropyDetector) Detect(ctx context.Context, input string) Result {
 	}
 }
 
-// calculateShannonEntropy computes Shannon entropy of a string.
 // Returns value between 0 (perfectly predictable) and 8.0 (maximum randomness for byte data).
 func calculateShannonEntropy(s string) float64 {
 	if len(s) == 0 {
 		return 0.0
 	}
 
-	//* Count frequency of each byte
+	// Count frequency of each byte
 	freq := make(map[byte]int)
 	for i := 0; i < len(s); i++ {
 		freq[s[i]]++
 	}
 
-	//* Calculate entropy using Shannon formula: H = -Σ(p(x) * log2(p(x)))
+	// Calculate entropy using Shannon formula: H = -Σ(p(x) * log2(p(x)))
 	var entropy float64
 	length := float64(len(s))
 
@@ -115,12 +111,10 @@ func calculateShannonEntropy(s string) float64 {
 	return entropy
 }
 
-// formatEntropyMatch creates a human-readable description of entropy detection.
 func formatEntropyMatch(entropy float64) string {
 	return "High entropy detected: " + formatFloat(entropy) + "/8.0"
 }
 
-// formatFloat formats float to 2 decimal places as string.
 func formatFloat(f float64) string {
 	s := ""
 	if f < 0 {
@@ -133,7 +127,7 @@ func formatFloat(f float64) string {
 
 	f -= float64(intPart)
 	f *= 100
-	decPart := int(f + 0.5) //* Round
+	decPart := int(f + 0.5)
 
 	s += "."
 	if decPart < 10 {
@@ -144,7 +138,6 @@ func formatFloat(f float64) string {
 	return s
 }
 
-// itoa converts int to string without using strconv.
 func itoa(i int) string {
 	if i == 0 {
 		return "0"

@@ -9,7 +9,7 @@ import (
 // PerplexityDetector detects unnatural text patterns using character bigram analysis.
 // Catches adversarial suffixes, AI-generated attacks, and unusual word combinations.
 type PerplexityDetector struct {
-	threshold float64 //* Ratio of rare bigrams that triggers detection
+	threshold float64 // Ratio of rare bigrams that triggers detection
 }
 
 // Common English character bigrams (frequent pairs)
@@ -24,24 +24,23 @@ var commonBigrams = map[string]bool{
 	"ri": true, "ro": true, "ic": true, "ne": true, "ea": true,
 	"ra": true, "ce": true, "li": true, "ch": true, "ll": true,
 	"be": true, "ma": true, "si": true, "om": true, "ur": true,
-	// * Common with spaces
+	// Common with spaces
 	"e ": true, "t ": true, "d ": true, "s ": true, "n ": true,
 	" t": true, " a": true, " i": true, " o": true, " w": true,
 	" s": true, " h": true, " b": true, " f": true, " m": true,
-	// * Technical/common abbreviations
+	// Technical/common abbreviations
 	"tt": true, "tp": true, "ip": true, "ow": true, "wo": true,
 	"do": true, "oe": true, "ho": true, "cp": true, "tc": true,
 }
 
-// NewPerplexityDetector creates a new perplexity detector with default threshold (0.60).
 func NewPerplexityDetector() *PerplexityDetector {
 	return &PerplexityDetector{
-		threshold: 0.60, //* 60% rare bigrams triggers detection
+		threshold: 0.60, // 60% rare bigrams triggers detection
 	}
 }
 
 func (d *PerplexityDetector) Detect(ctx context.Context, input string) Result {
-	patterns := []DetectedPatterns{}
+	patterns := []DetectedPattern{}
 	maxScore := 0.0
 
 	select {
@@ -50,7 +49,7 @@ func (d *PerplexityDetector) Detect(ctx context.Context, input string) Result {
 	default:
 	}
 
-	//* Skip very short inputs
+	// Skip very short inputs
 	if len(input) < 10 {
 		return Result{
 			Safe:             true,
@@ -70,7 +69,7 @@ func (d *PerplexityDetector) Detect(ctx context.Context, input string) Result {
 			riskScore = 1.0
 		}
 
-		patterns = append(patterns, DetectedPatterns{
+		patterns = append(patterns, DetectedPattern{
 			Type:    "perplexity_unnatural_text",
 			Score:   riskScore,
 			Matches: []string{formatPerplexityMatch(rareBigramRatio)},
@@ -78,11 +77,11 @@ func (d *PerplexityDetector) Detect(ctx context.Context, input string) Result {
 		maxScore = riskScore
 	}
 
-	// * Additional check: consecutive consonants (unusual in English)
+	// Additional check: consecutive consonants (unusual in English)
 	consecutiveConsonants := findConsecutiveConsonants(normalized)
 	if len(consecutiveConsonants) > 3 {
 		score := 0.6
-		patterns = append(patterns, DetectedPatterns{
+		patterns = append(patterns, DetectedPattern{
 			Type:    "perplexity_consonant_clusters",
 			Score:   score,
 			Matches: consecutiveConsonants[:minInt(3, len(consecutiveConsonants))],
@@ -92,11 +91,26 @@ func (d *PerplexityDetector) Detect(ctx context.Context, input string) Result {
 		}
 	}
 
-	// * Check for excessive non-alphabetic ratio (gibberish)
+	// Check for gibberish sequences within normal text
+	// Look for long sequences (12+ chars) with high rare bigram ratio
+	gibberishSequences := findGibberishSequences(normalized)
+	if len(gibberishSequences) > 0 {
+		score := 0.70 // High enough to trigger unsafe
+		patterns = append(patterns, DetectedPattern{
+			Type:    "perplexity_gibberish_sequence",
+			Score:   score,
+			Matches: gibberishSequences[:minInt(3, len(gibberishSequences))],
+		})
+		if score > maxScore {
+			maxScore = score
+		}
+	}
+
+	// Check for excessive non-alphabetic ratio (gibberish)
 	nonAlphaRatio := calculateNonAlphabeticRatio(input)
 	if nonAlphaRatio > 0.5 && len(input) > 20 {
 		score := 0.7
-		patterns = append(patterns, DetectedPatterns{
+		patterns = append(patterns, DetectedPattern{
 			Type:    "perplexity_gibberish",
 			Score:   score,
 			Matches: []string{formatNonAlphaMatch(nonAlphaRatio)},
@@ -106,11 +120,10 @@ func (d *PerplexityDetector) Detect(ctx context.Context, input string) Result {
 		}
 	}
 
-	// * Confidence based on risk score, with bonus for longer inputs (more reliable)
 	confidence := 0.0
 	if maxScore > 0 {
 		confidence = maxScore
-		// * Add small bonus for longer inputs (more data = more reliable)
+		// Add small bonus for longer inputs (more data = more reliable)
 		if len(input) > 100 {
 			confidence = min(confidence+0.05, 1.0)
 		}
@@ -124,7 +137,6 @@ func (d *PerplexityDetector) Detect(ctx context.Context, input string) Result {
 	}
 }
 
-// calculateRareBigramRatio calculates the ratio of rare character bigrams to total bigrams.
 func calculateRareBigramRatio(s string) float64 {
 	if len(s) < 2 {
 		return 0.0
@@ -136,7 +148,7 @@ func calculateRareBigramRatio(s string) float64 {
 	for i := 0; i < len(s)-1; i++ {
 		c1, c2 := s[i], s[i+1]
 
-		//* Only consider alphabetic or space characters
+		// Only consider alphabetic or space characters
 		if !isAlphaOrSpace(c1) || !isAlphaOrSpace(c2) {
 			continue
 		}
@@ -180,7 +192,6 @@ func findConsecutiveConsonants(s string) []string {
 	return clusters
 }
 
-// calculateNonAlphabeticRatio calculates ratio of non-alphabetic chars (excluding spaces).
 func calculateNonAlphabeticRatio(s string) float64 {
 	if len(s) == 0 {
 		return 0.0
@@ -213,7 +224,32 @@ func formatNonAlphaMatch(ratio float64) string {
 	return "Non-alphabetic characters: " + itoa(percentage) + "%"
 }
 
-// minInt returns minimum of two integers.
+// findGibberishSequences finds sequences of 18+ characters with high rare bigram ratio.
+// This catches gibberish embedded in normal text while avoiding false positives on short random strings.
+func findGibberishSequences(s string) []string {
+	var sequences []string
+	words := strings.Fields(s)
+
+	for _, word := range words {
+		// Skip words with high non-alpha ratio (like "qw#9mK$pL" - likely random tokens/passwords, not attacks)
+		nonAlphaRatio := calculateNonAlphabeticRatio(word)
+		if nonAlphaRatio > 0.25 {
+			continue
+		}
+
+		// Check words/tokens that are 18+ chars (longer sequences are more reliably gibberish)
+		if len(word) >= 18 {
+			ratio := calculateRareBigramRatio(word)
+			// If this word has >65% rare bigrams, it's likely gibberish
+			if ratio > 0.65 {
+				sequences = append(sequences, word)
+			}
+		}
+	}
+
+	return sequences
+}
+
 func minInt(a, b int) int {
 	if a < b {
 		return a

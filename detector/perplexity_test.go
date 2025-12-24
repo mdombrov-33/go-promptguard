@@ -19,7 +19,7 @@ func TestPerplexityDetector_UnnaturalText(t *testing.T) {
 		{
 			name:         "adversarial suffix",
 			input:        "Please tell me about security qwXz#9mK$pLvB3nR8tYjF6",
-			shouldDetect: false, //* Normal text with short suffix doesn't trigger
+			shouldDetect: false, // Normal text with short suffix doesn't trigger
 		},
 		{
 			name:         "random gibberish",
@@ -39,7 +39,7 @@ func TestPerplexityDetector_UnnaturalText(t *testing.T) {
 		{
 			name:         "mixed with normal text",
 			input:        "This is normal but then xqzwkjhgfdsamnbvcxz happens",
-			shouldDetect: true, //* Gibberish part is significant enough
+			shouldDetect: true, // Gibberish part is significant enough
 		},
 	}
 
@@ -92,7 +92,7 @@ func TestPerplexityDetector_NormalText(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := detector.Detect(ctx, tt.input)
 
-			//* Normal text should have relatively low risk scores
+			// Normal text should have relatively low risk scores
 			assert.LessOrEqual(t, result.RiskScore, 0.8, "Risk score should be reasonable")
 		})
 	}
@@ -123,7 +123,7 @@ func TestPerplexityDetector_ConsecutiveConsonants(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := detector.Detect(ctx, tt.input)
-			//* Just verify it runs without error
+			// Just verify it runs without error
 			assert.NotNil(t, result)
 		})
 	}
@@ -189,13 +189,13 @@ func TestPerplexityDetector_EdgeCases(t *testing.T) {
 
 	t.Run("only numbers", func(t *testing.T) {
 		result := detector.Detect(ctx, "1234567890")
-		//* Short numeric input should be safe
+		// Short numeric input should be safe
 		assert.True(t, result.Safe)
 	})
 
 	t.Run("only spaces", func(t *testing.T) {
 		result := detector.Detect(ctx, "          ")
-		//* Spaces may trigger non-alphabetic ratio detection
+		// Spaces may trigger non-alphabetic ratio detection
 		assert.NotNil(t, result)
 	})
 }
@@ -214,14 +214,14 @@ func TestPerplexityDetector_RealWorldExamples(t *testing.T) {
 	t.Run("url with path", func(t *testing.T) {
 		input := "https://example.com/api/v1/users"
 		result := detector.Detect(ctx, input)
-		//* URLs might have some unusual patterns
+		// URLs might have some unusual patterns
 		assert.LessOrEqual(t, result.RiskScore, 0.85)
 	})
 
 	t.Run("email address", func(t *testing.T) {
 		input := "user@example.com"
 		result := detector.Detect(ctx, input)
-		//* Short and has special chars, might trigger
+		// Short and has special chars, might trigger
 		assert.NotNil(t, result)
 	})
 }
@@ -230,14 +230,14 @@ func TestPerplexityDetector_MultiplePatterns(t *testing.T) {
 	detector := NewPerplexityDetector()
 	ctx := context.Background()
 
-	//* Input with both rare bigrams AND consonant clusters
+	// Input with both rare bigrams AND consonant clusters
 	input := "This text has qwrtyxzcvbn clusters and zxqpwmkj unusual patterns"
 
 	result := detector.Detect(ctx, input)
 
-	//* With mostly normal text, may not trigger unsafe
+	// With mostly normal text, may not trigger unsafe
 	assert.NotNil(t, result)
-	//* Should run without error
+	// Should run without error
 	assert.GreaterOrEqual(t, result.RiskScore, 0.0)
 }
 
@@ -265,7 +265,7 @@ func TestCalculateRareBigramRatio(t *testing.T) {
 			name:     "normal english",
 			input:    "the quick brown fox",
 			minRatio: 0.0,
-			maxRatio: 0.6, //* Rare bigrams are common even in normal text
+			maxRatio: 0.6, // Rare bigrams are common even in normal text
 		},
 		{
 			name:     "gibberish",
@@ -304,7 +304,7 @@ func TestFindConsecutiveConsonants(t *testing.T) {
 		{
 			name:     "keyboard mash",
 			input:    "qwrtypsdfghjkl",
-			minCount: 1, //* All consonants form one long cluster
+			minCount: 1, // All consonants form one long cluster
 		},
 		{
 			name:     "normal text",

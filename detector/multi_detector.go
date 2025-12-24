@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-// MultiDetector combines multiple detectors and aggregates their results.
+// MultiDetector combines multiple detectors and aggregates their results
 type MultiDetector struct {
 	detectors []Detector
 	config    Config
@@ -13,12 +13,20 @@ type MultiDetector struct {
 
 // New creates a new MultiDetector with the given configuration options.
 // By default, all implemented detectors are enabled with a threshold of 0.7.
-// Example:
-// *	guard := detector.New(
-// *	    detector.WithThreshold(0.8),
-// *	    detector.WithRoleInjection(true),
-// *	    detector.WithPromptLeak(true),
-// *	)
+// Examples:
+//
+//	// Customize detectors
+//	guard := detector.New(
+//	    detector.WithThreshold(0.8),
+//	    detector.WithEntropy(false),
+//	    detector.WithNormalizationMode(detector.ModeAggressive),
+//	)
+//
+//	// With LLM
+//	judge := detector.NewOpenAIJudge(apiKey, "gpt-5")
+//	guard := detector.New(
+//	    detector.WithThreshold(0.8),
+//	    detector.WithLLM(judge, detector.LLMConditional),
 func New(opts ...Option) *MultiDetector {
 	cfg := defaultConfig()
 	for _, opt := range opts {
@@ -29,12 +37,6 @@ func New(opts ...Option) *MultiDetector {
 		detectors: make([]Detector, 0),
 		config:    cfg,
 	}
-
-	// * Register enabled detectors
-	// * To add a new detector:
-	// * 1. Add EnableXXX field to Config
-	// * 2. Add WithXXX() Option function
-	// * 3. Add if statement here to register it
 
 	if cfg.EnableRoleInjection {
 		md.detectors = append(md.detectors, NewRoleInjectionDetector())
@@ -64,6 +66,14 @@ func New(opts ...Option) *MultiDetector {
 		md.detectors = append(md.detectors, NewTokenAnomalyDetector())
 	}
 
+	if cfg.EnableNormalization {
+		md.detectors = append(md.detectors, NewNormalizationDetector(cfg.NormalizationMode))
+	}
+
+	if cfg.EnableDelimiter {
+		md.detectors = append(md.detectors, NewDelimiterDetector(cfg.DelimiterMode))
+	}
+
 	return md
 }
 
@@ -72,20 +82,21 @@ func New(opts ...Option) *MultiDetector {
 //   - Takes the highest individual risk score from any detector
 //   - Adds a 0.1 bonus for each additional pattern detected (capped at 1.0)
 //   - Confidence represents certainty of classification:
-//     * When detectors find patterns: max confidence + 0.05 bonus if multiple detectors agree
-//     * When no patterns found: high confidence (~0.85-0.90) it's safe
+//   - When detectors find patterns: max confidence + 0.05 bonus if multiple detectors agree
+//   - When no patterns found: high confidence (~0.85-0.90) it's safe
+//
 // The input is considered unsafe if the final risk score >= threshold.
 func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 	if md.config.MaxInputLength > 0 && len(input) > md.config.MaxInputLength {
 		input = input[:md.config.MaxInputLength]
 	}
 
-	allPatterns := make([]DetectedPatterns, 0)
+	allPatterns := make([]DetectedPattern, 0)
 	maxScore := 0.0
 	maxConfidence := 0.0
 	detectorsTriggered := 0
 
-	//* Run each detector
+	// Run each detector
 	for _, d := range md.detectors {
 		select {
 		case <-ctx.Done():
@@ -111,7 +122,7 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 			maxScore = result.RiskScore
 		}
 
-		//* Track highest confidence from detectors that triggered
+		// Track highest confidence from detectors that triggered
 		if result.RiskScore > 0 {
 			if result.Confidence > maxConfidence {
 				maxConfidence = result.Confidence
@@ -120,15 +131,15 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		}
 	}
 
-	//* Calculate final risk score using our algorithm:
-	//* final_score = max(individual_scores) + 0.1 × (num_additional_patterns - 1)
+	// Calculate final risk score using our algorithm:
+	// final_score = max(individual_scores) + 0.1 × (num_additional_patterns - 1)
 	finalScore := maxScore
 	if len(allPatterns) > 1 {
 		bonus := 0.1 * float64(len(allPatterns)-1)
 		finalScore = min(finalScore+bonus, 1.0)
 	}
 
-	// * Calculate confidence based on detection results
+	// Calculate confidence based on detection results
 	finalConfidence := 0.0
 	if detectorsTriggered > 0 {
 		// Use max confidence from detectors, with bonus if multiple agree
@@ -146,25 +157,27 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		}
 	}
 
-	// * Check if we should run LLM detector
+	// Check if we should run LLM detector
 	shouldRunLLM := false
 	if md.config.LLMJudge != nil {
 		switch md.config.LLMRunMode {
 		case LLMAlways:
 			shouldRunLLM = true
 		case LLMConditional:
-			//* Run if pattern-based detectors are uncertain (0.5-0.7)
+			// Run if pattern-based detectors are uncertain (0.5-0.7)
 			shouldRunLLM = finalScore >= 0.5 && finalScore <= 0.7
 		case LLMFallback:
-			//* Run if pattern-based detectors say safe
+			// Run if pattern-based detectors say safe
 			shouldRunLLM = finalScore < md.config.Threshold
 		}
 	}
 
-	// * Run LLM detector if needed
+	// Run LLM detector if needed
+	var llmResultData *LLMResult
 	if shouldRunLLM {
 		llmDetector := NewLLMDetector(md.config.LLMJudge)
 		llmResult := llmDetector.Detect(ctx, input)
+		llmResultData = llmResult.LLMResult
 
 		// Round LLM pattern scores
 		for i := range llmResult.DetectedPatterns {
@@ -183,7 +196,7 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 			finalScore = min(finalScore+bonus, 1.0)
 		}
 
-		//* Recalculate confidence including LLM result
+		// Recalculate confidence including LLM result
 		if llmResult.RiskScore > 0 {
 			if llmResult.Confidence > maxConfidence {
 				maxConfidence = llmResult.Confidence
@@ -208,6 +221,7 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		RiskScore:        round(finalScore, 2),
 		Confidence:       round(finalConfidence, 2),
 		DetectedPatterns: allPatterns,
+		LLMResult:        llmResultData,
 	}
 }
 

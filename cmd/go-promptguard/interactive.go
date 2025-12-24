@@ -38,6 +38,10 @@ type model struct {
 	enablePromptLeak   bool
 	enableInstOverride bool
 	enableObfuscation  bool
+	enableNorm         bool
+	normMode           detector.DetectionMode
+	enableDelim        bool
+	delimMode          detector.DetectionMode
 	enableEntropy      bool
 	enablePerp         bool
 	enableToken        bool
@@ -147,6 +151,10 @@ func initialModel() model {
 		enablePromptLeak:   true,
 		enableInstOverride: true,
 		enableObfuscation:  true,
+		enableNorm:         true,
+		normMode:           detector.ModeBalanced,
+		enableDelim:        true,
+		delimMode:          detector.ModeBalanced,
 		enableEntropy:      true,
 		enablePerp:         true,
 		enableToken:        true,
@@ -162,6 +170,10 @@ func initialModel() model {
 		m.enablePromptLeak = savedCfg.EnablePromptLeak
 		m.enableInstOverride = savedCfg.EnableInstOverride
 		m.enableObfuscation = savedCfg.EnableObfuscation
+		m.enableNorm = savedCfg.EnableNorm
+		m.normMode = savedCfg.NormMode
+		m.enableDelim = savedCfg.EnableDelim
+		m.delimMode = savedCfg.DelimMode
 		m.enableEntropy = savedCfg.EnableEntropy
 		m.enablePerp = savedCfg.EnablePerp
 		m.enableToken = savedCfg.EnableToken
@@ -186,6 +198,10 @@ func (m *model) updateGuard() {
 		detector.WithPromptLeak(m.enablePromptLeak),
 		detector.WithInstructionOverride(m.enableInstOverride),
 		detector.WithObfuscation(m.enableObfuscation),
+		detector.WithNormalization(m.enableNorm),
+		detector.WithNormalizationMode(m.normMode),
+		detector.WithDelimiter(m.enableDelim),
+		detector.WithDelimiterMode(m.delimMode),
 		detector.WithEntropy(m.enableEntropy),
 		detector.WithPerplexity(m.enablePerp),
 		detector.WithTokenAnomaly(m.enableToken),
@@ -387,7 +403,7 @@ func (m model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.settingsChoice--
 			}
 		case "down":
-			if m.settingsChoice < 10 { // 0-10 = 11 settings total
+			if m.settingsChoice < 14 { // 0-14 = 15 settings total
 				m.settingsChoice++
 			}
 		case "left":
@@ -402,46 +418,6 @@ func (m model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "enter", " ":
 			changed = m.toggleSetting(m.settingsChoice)
-		case "1":
-			m.enableRoleInj = !m.enableRoleInj
-			changed = true
-		case "2":
-			m.enablePromptLeak = !m.enablePromptLeak
-			changed = true
-		case "3":
-			m.enableInstOverride = !m.enableInstOverride
-			changed = true
-		case "4":
-			m.enableObfuscation = !m.enableObfuscation
-			changed = true
-		case "5":
-			m.enableEntropy = !m.enableEntropy
-			changed = true
-		case "6":
-			m.enablePerp = !m.enablePerp
-			changed = true
-		case "7":
-			m.enableToken = !m.enableToken
-			changed = true
-		case "8":
-			m.enableLLM = !m.enableLLM
-			changed = true
-		case "9":
-			m.llmMode = (m.llmMode + 1) % 3
-			changed = true
-		case "0":
-			if len(m.availableProviders) > 0 {
-				currentIdx := 0
-				for i, p := range m.availableProviders {
-					if p == m.llmProvider {
-						currentIdx = i
-						break
-					}
-				}
-				currentIdx = (currentIdx + 1) % len(m.availableProviders)
-				m.llmProvider = m.availableProviders[currentIdx]
-				changed = true
-			}
 		}
 
 		if changed {
@@ -469,21 +445,43 @@ func (m *model) toggleSetting(choice int) bool {
 		m.enableObfuscation = !m.enableObfuscation
 		return true
 	case 5:
-		m.enableEntropy = !m.enableEntropy
+		m.enableNorm = !m.enableNorm
 		return true
 	case 6:
-		m.enablePerp = !m.enablePerp
+		// Toggle normalization mode
+		if m.normMode == detector.ModeBalanced {
+			m.normMode = detector.ModeAggressive
+		} else {
+			m.normMode = detector.ModeBalanced
+		}
 		return true
 	case 7:
-		m.enableToken = !m.enableToken
+		m.enableDelim = !m.enableDelim
 		return true
 	case 8:
-		m.enableLLM = !m.enableLLM
+		// Toggle delimiter mode
+		if m.delimMode == detector.ModeBalanced {
+			m.delimMode = detector.ModeAggressive
+		} else {
+			m.delimMode = detector.ModeBalanced
+		}
 		return true
 	case 9:
-		m.llmMode = (m.llmMode + 1) % 3
+		m.enableEntropy = !m.enableEntropy
 		return true
 	case 10:
+		m.enablePerp = !m.enablePerp
+		return true
+	case 11:
+		m.enableToken = !m.enableToken
+		return true
+	case 12:
+		m.enableLLM = !m.enableLLM
+		return true
+	case 13:
+		m.llmMode = (m.llmMode + 1) % 3
+		return true
+	case 14:
 		if len(m.availableProviders) > 0 {
 			currentIdx := 0
 			for i, p := range m.availableProviders {
@@ -604,11 +602,23 @@ func (m model) View() string {
 	return ""
 }
 
+func (m model) getPanelWidth() int {
+	// Adaptive width based on terminal width
+	// Min: 70, Max: 120
+	width := min(m.width-10, 120)
+	return max(width, 70)
+}
+
 func (m model) viewMenu() string {
 	var s strings.Builder
 
+	// Add vertical spacing based on terminal height
+	topPadding := max(1, (m.height-30)/2)
+	for i := 0; i < topPadding; i++ {
+		s.WriteString("\n")
+	}
+
 	header := titleStyle.Render("go-promptguard")
-	s.WriteString("\n\n")
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, header))
 	s.WriteString("\n\n")
 
@@ -658,7 +668,7 @@ func (m model) viewCheck() string {
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, title))
 	s.WriteString("\n\n")
 
-	inputPanel := panelStyle.Width(70).Render(m.input.View())
+	inputPanel := panelStyle.Width(m.getPanelWidth()).Render(m.input.View())
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, inputPanel))
 
 	if m.checking {
@@ -698,7 +708,7 @@ func (m model) viewResults() string {
 	if len(inputDisplay) > 80 {
 		inputDisplay = inputDisplay[:80] + "..."
 	}
-	inputBox := panelStyle.Width(70).Render("Input: \"" + inputDisplay + "\"")
+	inputBox := panelStyle.Width(m.getPanelWidth()).Render("Input: \"" + inputDisplay + "\"")
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, inputBox))
 	s.WriteString("\n")
 
@@ -744,7 +754,7 @@ func (m model) viewResults() string {
 	metricsContent.WriteString(lipgloss.NewStyle().Foreground(barColor).Render(bar))
 
 	llmUsed := false
-	var llmPattern *detector.DetectedPatterns
+	var llmPattern *detector.DetectedPattern
 	for i := range m.result.DetectedPatterns {
 		if strings.HasPrefix(m.result.DetectedPatterns[i].Type, "llm_") {
 			llmUsed = true
@@ -789,7 +799,7 @@ func (m model) viewResults() string {
 		metricsContent.WriteString(llmSkipped + "\n")
 	}
 
-	metricsPanel := panelStyle.Width(70).Render(metricsContent.String())
+	metricsPanel := panelStyle.Width(m.getPanelWidth()).Render(metricsContent.String())
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, metricsPanel))
 
 	help := helpStyle.Render("Enter: Check Another  •  Esc: Menu")
@@ -827,29 +837,42 @@ func (m model) viewSettings() string {
 	thresholdLine := fmt.Sprintf("Threshold: %.2f  (←/→ to adjust)", m.threshold)
 	content.WriteString(selector(0, thresholdLine) + "\n\n")
 
+	modeDisplay := func(mode detector.DetectionMode) string {
+		if mode == detector.ModeAggressive {
+			return "Aggressive"
+		}
+		return "Balanced"
+	}
+
 	content.WriteString("Pattern Detectors:\n")
-	content.WriteString(selector(1, fmt.Sprintf("[1] Role Injection       %s", toggle(m.enableRoleInj))) + "\n")
-	content.WriteString(selector(2, fmt.Sprintf("[2] Prompt Leak          %s", toggle(m.enablePromptLeak))) + "\n")
-	content.WriteString(selector(3, fmt.Sprintf("[3] Instruction Override %s", toggle(m.enableInstOverride))) + "\n")
-	content.WriteString(selector(4, fmt.Sprintf("[4] Obfuscation          %s", toggle(m.enableObfuscation))) + "\n\n")
+	content.WriteString(selector(1, fmt.Sprintf("  Role Injection       %s", toggle(m.enableRoleInj))) + "\n")
+	content.WriteString(selector(2, fmt.Sprintf("  Prompt Leak          %s", toggle(m.enablePromptLeak))) + "\n")
+	content.WriteString(selector(3, fmt.Sprintf("  Instruction Override %s", toggle(m.enableInstOverride))) + "\n")
+	content.WriteString(selector(4, fmt.Sprintf("  Obfuscation          %s", toggle(m.enableObfuscation))) + "\n")
+	content.WriteString(selector(5, fmt.Sprintf("  Normalization        %s", toggle(m.enableNorm))) + "\n")
+	content.WriteString(selector(6, fmt.Sprintf("    Mode               %s", modeDisplay(m.normMode))) + "\n")
+	content.WriteString(selector(7, fmt.Sprintf("  Delimiter            %s", toggle(m.enableDelim))) + "\n")
+	content.WriteString(selector(8, fmt.Sprintf("    Mode               %s", modeDisplay(m.delimMode))) + "\n\n")
 
 	content.WriteString("Statistical Detectors:\n")
-	content.WriteString(selector(5, fmt.Sprintf("[5] Entropy              %s", toggle(m.enableEntropy))) + "\n")
-	content.WriteString(selector(6, fmt.Sprintf("[6] Perplexity           %s", toggle(m.enablePerp))) + "\n")
-	content.WriteString(selector(7, fmt.Sprintf("[7] Token Anomaly        %s", toggle(m.enableToken))) + "\n\n")
+	content.WriteString(selector(9, fmt.Sprintf("  Entropy              %s", toggle(m.enableEntropy))) + "\n")
+	content.WriteString(selector(10, fmt.Sprintf("  Perplexity           %s", toggle(m.enablePerp))) + "\n")
+	content.WriteString(selector(11, fmt.Sprintf("  Token Anomaly        %s", toggle(m.enableToken))) + "\n\n")
 
 	content.WriteString("LLM Judge:\n")
-	content.WriteString(selector(8, fmt.Sprintf("[8] Enable               %s", toggle(m.enableLLM))) + "\n")
+	content.WriteString(selector(12, fmt.Sprintf("  Enable               %s", toggle(m.enableLLM))) + "\n")
 
 	modeNames := []string{"Always", "Conditional", "Fallback"}
 	modeName := modeNames[m.llmMode]
-	content.WriteString(selector(9, fmt.Sprintf("[9] Mode                 %s", modeName)) + "\n")
+	content.WriteString(selector(13, fmt.Sprintf("  Mode                 %s", modeName)) + "\n")
 
 	providerDisplay := capitalizeProviderName(m.llmProvider)
 	if m.llmProvider == "none" {
 		providerDisplay = lipgloss.NewStyle().Foreground(mutedColor).Render(providerDisplay)
 	}
-	content.WriteString(selector(10, fmt.Sprintf("[0] Provider             %s", providerDisplay)) + "\n")
+	content.WriteString(selector(14, fmt.Sprintf("  Provider             %s", providerDisplay)) + "\n")
+
+	content.WriteString("\n")
 
 	// Show active model for current provider
 	if m.llmProvider != "none" {
@@ -871,7 +894,8 @@ func (m model) viewSettings() string {
 				modelName = "llama3.1:8b (default)"
 			}
 		}
-		content.WriteString(lipgloss.NewStyle().Foreground(mutedColor).Render(fmt.Sprintf("      Model: %s\n", modelName)))
+		styledModel := lipgloss.NewStyle().Foreground(mutedColor).Render(modelName)
+		content.WriteString(fmt.Sprintf("  Model: %s\n", styledModel))
 	}
 
 	if len(m.availableProviders) > 1 {
@@ -880,13 +904,14 @@ func (m model) viewSettings() string {
 			capitalizedProviders[i] = capitalizeProviderName(p)
 		}
 		providers := strings.Join(capitalizedProviders, ", ")
-		content.WriteString(lipgloss.NewStyle().Foreground(mutedColor).Render(fmt.Sprintf("      Available: %s\n", providers)))
+		styledProviders := lipgloss.NewStyle().Foreground(mutedColor).Render(providers)
+		content.WriteString(fmt.Sprintf("  Available: %s\n", styledProviders))
 	}
 
-	panel := panelStyle.Width(70).Render(content.String())
+	panel := panelStyle.Width(m.getPanelWidth()).Render(content.String())
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, panel))
 
-	help := helpStyle.Render("↑/↓: Navigate  •  Enter/Space: Toggle  •  ←/→: Adjust  •  0-9: Quick Select  •  Esc: Back")
+	help := helpStyle.Render("↑/↓: Navigate  •  Enter/Space: Toggle  •  ←/→: Adjust Threshold  •  Esc: Back")
 	s.WriteString("\n\n")
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, help))
 
@@ -913,13 +938,15 @@ Detectors:
   • Prompt Leak
   • Instruction Override
   • Obfuscation
+  • Normalization
+  • Delimiter
   • Entropy Analysis
   • Perplexity Analysis
   • Token Anomaly
   • LLM Judge (optional)
 `, version)
 
-	panel := panelStyle.Width(70).Render(content)
+	panel := panelStyle.Width(m.getPanelWidth()).Render(content)
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, panel))
 
 	help := helpStyle.Render("Esc: Back")
@@ -952,7 +979,7 @@ func (m model) viewBatch() string {
 		content.WriteString("\n\nSupported: TXT (one per line), CSV (first column)")
 	}
 
-	panel := panelStyle.Width(70).Render(content.String())
+	panel := panelStyle.Width(m.getPanelWidth()).Render(content.String())
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, panel))
 
 	help := helpStyle.Render("Enter: Process  •  Esc: Back")
@@ -992,7 +1019,7 @@ func (m model) viewBatchResults() string {
 	content.WriteString("  [S] Save as CSV\n")
 	content.WriteString("  [J] Save as JSON")
 
-	panel := panelStyle.Width(70).Render(content.String())
+	panel := panelStyle.Width(m.getPanelWidth()).Render(content.String())
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, panel))
 
 	help := helpStyle.Render("S/J: Export  •  Enter: New Batch  •  Esc: Back")

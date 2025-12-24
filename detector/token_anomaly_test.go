@@ -328,7 +328,7 @@ func TestTokenAnomalyDetector_EdgeCases(t *testing.T) {
 
 	t.Run("only punctuation", func(t *testing.T) {
 		result := detector.Detect(ctx, "............")
-		//* 100% special chars triggers detection
+		// 100% special chars triggers detection
 		assert.False(t, result.Safe)
 	})
 }
@@ -337,7 +337,7 @@ func TestTokenAnomalyDetector_MultiplePatterns(t *testing.T) {
 	detector := NewTokenAnomalyDetector()
 	ctx := context.Background()
 
-	//* Input with both Unicode mixing AND excessive special chars
+	// Input with both Unicode mixing AND excessive special chars
 	input := "Hello мир!@#$%^&*()!@#$%^&*() world"
 
 	result := detector.Detect(ctx, input)
@@ -345,13 +345,13 @@ func TestTokenAnomalyDetector_MultiplePatterns(t *testing.T) {
 	assert.False(t, result.Safe, "Should be unsafe")
 	assert.GreaterOrEqual(t, len(result.DetectedPatterns), 1, "Should detect at least one pattern")
 
-	//* Check if multiple patterns detected
+	// Check if multiple patterns detected
 	patternTypes := make(map[string]bool)
 	for _, p := range result.DetectedPatterns {
 		patternTypes[p.Type] = true
 	}
 
-	//* Should have at least one of these
+	// Should have at least one of these
 	hasAnyPattern := patternTypes["token_unicode_mixing"] || patternTypes["token_excessive_special_chars"]
 	assert.True(t, hasAnyPattern, "Should detect Unicode mixing or special chars")
 }
@@ -588,14 +588,14 @@ func TestTokenAnomalyDetector_RealWorldExamples(t *testing.T) {
 	t.Run("legitimate code with special chars", func(t *testing.T) {
 		input := "const x = { key: 'value', num: 42 };"
 		result := detector.Detect(ctx, input)
-		//* Should not trigger - reasonable special char ratio
+		// Should not trigger - reasonable special char ratio
 		assert.LessOrEqual(t, result.RiskScore, 0.7)
 	})
 
 	t.Run("legitimate url", func(t *testing.T) {
 		input := "https://api.example.com/v1/users?id=123&name=test"
 		result := detector.Detect(ctx, input)
-		//* URL has special chars but in reasonable ratio
+		// URL has special chars but in reasonable ratio
 		assert.LessOrEqual(t, result.RiskScore, 0.7)
 	})
 
@@ -608,7 +608,7 @@ func TestTokenAnomalyDetector_RealWorldExamples(t *testing.T) {
 	t.Run("homoglyph attack (Cyrillic a looks like Latin a)", func(t *testing.T) {
 		input := "Hello world but with Cyrillicа"
 		result := detector.Detect(ctx, input)
-		//* Should detect script mixing
+		// Should detect script mixing
 		hasUnicodeMixing := false
 		for _, p := range result.DetectedPatterns {
 			if p.Type == "token_unicode_mixing" {

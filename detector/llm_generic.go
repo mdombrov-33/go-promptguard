@@ -11,8 +11,7 @@ import (
 	"time"
 )
 
-// GenericLLMJudge implements LLMJudge using OpenAI-compatible API endpoints.
-// Works with OpenAI, OpenRouter, Ollama, vLLM, LM Studio, and other compatible providers.
+// GenericLLMJudge implements LLMJudge using OpenAI-compatible API endpoints
 type GenericLLMJudge struct {
 	endpoint     string
 	apiKey       string
@@ -23,46 +22,19 @@ type GenericLLMJudge struct {
 	httpClient   *http.Client
 }
 
-// LLMJudgeOption allows customizing the GenericLLMJudge.
-type LLMJudgeOption func(*GenericLLMJudge)
-
-// WithOutputFormat sets the LLM output format (simple or structured).
-func WithOutputFormat(format LLMOutputFormat) LLMJudgeOption {
-	return func(j *GenericLLMJudge) {
-		j.outputFormat = format
-	}
-}
-
-// WithSystemPrompt sets a custom system prompt.
-func WithSystemPrompt(prompt string) LLMJudgeOption {
-	return func(j *GenericLLMJudge) {
-		j.systemPrompt = prompt
-	}
-}
-
-// WithLLMTimeout sets the timeout for LLM API calls.
-func WithLLMTimeout(timeout time.Duration) LLMJudgeOption {
-	return func(j *GenericLLMJudge) {
-		j.timeout = timeout
-		j.httpClient.Timeout = timeout
-	}
-}
-
-// NewGenericLLMJudge creates a new LLM judge for OpenAI-compatible APIs.
 func NewGenericLLMJudge(endpoint, apiKey, model string, opts ...LLMJudgeOption) *GenericLLMJudge {
 	judge := &GenericLLMJudge{
 		endpoint:     endpoint,
 		apiKey:       apiKey,
 		model:        model,
-		outputFormat: LLMSimple, //* Default to cheap mode
-		systemPrompt: "",        //* Will be set based on format
+		outputFormat: LLMSimple, // Default to cheap mode
+		systemPrompt: "",        // Will be set based on format
 		timeout:      10 * time.Second,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
 	}
 
-	//* Apply options
 	for _, opt := range opts {
 		opt(judge)
 	}
@@ -78,7 +50,22 @@ func NewGenericLLMJudge(endpoint, apiKey, model string, opts ...LLMJudgeOption) 
 	return judge
 }
 
-// Judge sends the input to the LLM API and returns the classification result.
+// GetTimeout returns the configured timeout
+func (j *GenericLLMJudge) GetTimeout() time.Duration {
+	return j.timeout
+}
+
+// GetOutputFormat returns the configured output format
+func (j *GenericLLMJudge) GetOutputFormat() LLMOutputFormat {
+	return j.outputFormat
+}
+
+// GetSystemPrompt returns the configured system prompt
+func (j *GenericLLMJudge) GetSystemPrompt() string {
+	return j.systemPrompt
+}
+
+// Judge sends the input to the LLM API and returns the classification result
 func (j *GenericLLMJudge) Judge(ctx context.Context, input string) (LLMResult, error) {
 	payload := map[string]interface{}{
 		"model": j.model,
@@ -89,7 +76,6 @@ func (j *GenericLLMJudge) Judge(ctx context.Context, input string) (LLMResult, e
 		"temperature": 1,
 	}
 
-	//* If structured mode, request JSON response
 	if j.outputFormat == LLMStructured {
 		payload["response_format"] = map[string]string{"type": "json_object"}
 	}
@@ -99,7 +85,6 @@ func (j *GenericLLMJudge) Judge(ctx context.Context, input string) (LLMResult, e
 		return LLMResult{}, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	//* Create HTTP request
 	req, err := http.NewRequestWithContext(ctx, "POST", j.endpoint, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return LLMResult{}, fmt.Errorf("failed to create request: %w", err)
@@ -110,7 +95,6 @@ func (j *GenericLLMJudge) Judge(ctx context.Context, input string) (LLMResult, e
 		req.Header.Set("Authorization", "Bearer "+j.apiKey)
 	}
 
-	//* Execute request
 	resp, err := j.httpClient.Do(req)
 	if err != nil {
 		return LLMResult{}, fmt.Errorf("failed to execute request: %w", err)
@@ -122,7 +106,7 @@ func (j *GenericLLMJudge) Judge(ctx context.Context, input string) (LLMResult, e
 		return LLMResult{}, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
-	//* Parse response
+	// Parse response
 	var apiResp struct {
 		Choices []struct {
 			Message struct {
@@ -141,7 +125,6 @@ func (j *GenericLLMJudge) Judge(ctx context.Context, input string) (LLMResult, e
 
 	content := strings.TrimSpace(apiResp.Choices[0].Message.Content)
 
-	//* Parse based on output format
 	if j.outputFormat == LLMSimple {
 		return parseSimpleResponse(content)
 	}
@@ -155,7 +138,7 @@ func parseSimpleResponse(content string) (LLMResult, error) {
 	if strings.Contains(upper, "ATTACK") {
 		return LLMResult{
 			IsAttack:   true,
-			Confidence: 0.9, //* High confidence for clear classification
+			Confidence: 0.9, // High confidence for clear classification
 		}, nil
 	}
 
@@ -169,7 +152,6 @@ func parseSimpleResponse(content string) (LLMResult, error) {
 	return LLMResult{}, fmt.Errorf("unexpected response: %s", content)
 }
 
-// parseStructuredResponse parses JSON responses.
 func parseStructuredResponse(content string) (LLMResult, error) {
 	var resp struct {
 		IsAttack   bool    `json:"is_attack"`
