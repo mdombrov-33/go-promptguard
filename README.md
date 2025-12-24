@@ -383,8 +383,8 @@ Input → MultiDetector
          │   ├─ Prompt Leak
          │   ├─ Instruction Override
          │   ├─ Obfuscation
-         │   ├─ Normalization (character obfuscation)
-         │   └─ Delimiter (framing attacks)
+         │   ├─ Normalization
+         │   └─ Delimiter
          ├─ Statistical Analysis (3 detectors)
          │   ├─ Entropy
          │   ├─ Perplexity
