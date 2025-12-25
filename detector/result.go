@@ -15,7 +15,3 @@ type DetectedPattern struct {
 	Score   float64  // risk score from this pattern
 	Matches []string // actual text fragments that matched
 }
-
-func (r *Result) IsHighRisk() bool {
-	return r.RiskScore >= 0.7
-}
