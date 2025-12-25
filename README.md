@@ -114,6 +114,14 @@ if !result.Safe {
         // Example: "Found: role_injection_special_token (score: 0.90)"
     }
 }
+
+// LLM result (if LLM integration enabled)
+if result.LLMResult != nil {
+    result.LLMResult.IsAttack   // true/false - LLM detected attack
+    result.LLMResult.Confidence // 0.0-1.0 - How certain the LLM is
+    result.LLMResult.Reasoning  // Explanation (if WithOutputFormat(LLMStructured))
+    result.LLMResult.AttackType // Attack classification (if structured output)
+}
 ```
 
 **Real-world integration (web API):**
