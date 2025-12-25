@@ -8,7 +8,7 @@ import (
 	"unicode"
 )
 
-// ObfuscationDetector detects obfuscated or encoded malicious payloads
+// ObfuscationDetector detects obfuscated or encoded malicious payloads.
 type ObfuscationDetector struct{}
 
 var (
@@ -156,7 +156,7 @@ func isLikelyBase64(s string) bool {
 	return false
 }
 
-// hasZeroWidthChars detects zero-width unicode characters
+// hasZeroWidthChars detects zero-width unicode characters.
 func hasZeroWidthChars(s string) bool {
 	zeroWidthChars := []rune{
 		'\u200B', // Zero Width Space

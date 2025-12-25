@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// GenericLLMJudge implements LLMJudge using OpenAI-compatible API endpoints
+// GenericLLMJudge implements LLMJudge using OpenAI-compatible API endpoints.
 type GenericLLMJudge struct {
 	endpoint     string
 	apiKey       string

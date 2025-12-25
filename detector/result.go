@@ -1,6 +1,6 @@
 package detector
 
-// Result represents the detection result from analyzing an input
+// Result represents the detection result from analyzing an input.
 type Result struct {
 	Safe             bool    // true = safe, false = malicious
 	RiskScore        float64 // 0.0 - 1.0 risk score
@@ -9,7 +9,7 @@ type Result struct {
 	LLMResult        *LLMResult // Optional LLM-specific data (only set when using LLM detection)
 }
 
-// DetectedPattern contains information about a specific pattern detected in the input
+// DetectedPattern contains information about a specific pattern detected in the input.
 type DetectedPattern struct {
 	Type    string   // 'role_injection', 'prompt_leak', etc
 	Score   float64  // risk score from this pattern

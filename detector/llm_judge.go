@@ -2,7 +2,7 @@ package detector
 
 import "context"
 
-// LLMJudge is the interface for LLM-based prompt injection detection
+// LLMJudge is the interface for LLM-based prompt injection detection.
 type LLMJudge interface {
 	Judge(ctx context.Context, input string) (LLMResult, error)
 }
@@ -17,22 +17,22 @@ type LLMResult struct {
 type LLMRunMode int
 
 const (
-	// LLMAlways runs the LLM on every input (most accurate, most expensive)
+	// LLMAlways runs the LLM on every input (most accurate, most expensive).
 	LLMAlways LLMRunMode = iota
 
-	// LLMConditional runs the LLM only when pattern-based detectors are uncertain (0.5-0.7 score)
+	// LLMConditional runs the LLM only when pattern-based detectors are uncertain (0.5-0.7 score).
 	LLMConditional
 
-	// LLMFallback runs the LLM only when pattern-based detectors say safe (double-check negatives)
+	// LLMFallback runs the LLM only when pattern-based detectors say safe (double-check negatives).
 	LLMFallback
 )
 
 type LLMOutputFormat int
 
 const (
-	// LLMSimple expects "SAFE" or "ATTACK" response (cheap, fast)
+	// LLMSimple expects "SAFE" or "ATTACK" response (cheap, fast).
 	LLMSimple LLMOutputFormat = iota
 
-	// LLMStructured expects JSON response with reasoning (more tokens, more info)
+	// LLMStructured expects JSON response with reasoning (more tokens, more info).
 	LLMStructured
 )

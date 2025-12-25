@@ -5,8 +5,8 @@ import (
 	"math"
 )
 
-// EntropyDetector detects high-entropy inputs indicating obfuscation or encoding
-// Uses Shannon entropy to measure randomness - high entropy suggests base64, hex, or encrypted content
+// EntropyDetector detects high-entropy inputs indicating obfuscation or encoding.
+// Uses Shannon entropy to measure randomness - high entropy suggests base64, hex, or encrypted content.
 type EntropyDetector struct {
 	threshold float64
 }

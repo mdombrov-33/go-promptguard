@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-// InstructionOverrideDetector detects attempts to override or chain malicious instructions
+// InstructionOverrideDetector detects attempts to override or chain malicious instructions.
 type InstructionOverrideDetector struct{}
 
 var (

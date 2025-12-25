@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// NormalizationDetector detects character-level obfuscation by normalizing input
-// It handles attacks like "I.g.n.o.r.e" or "Ig no re" that split words to bypass detection
+// NormalizationDetector detects character-level obfuscation by normalizing input.
+// It handles attacks like "I.g.n.o.r.e" or "Ig no re" that split words to bypass detection.
 type NormalizationDetector struct {
 	mode DetectionMode
 }
@@ -23,8 +23,8 @@ var (
 )
 
 // Modes:
-//   - ModeBalanced (default): Removes dots, dashes, underscores between single characters
-//   - ModeAggressive: Also removes spaces between single characters
+//   - ModeBalanced (default): Removes dots, dashes, underscores between single characters.
+//   - ModeAggressive: Also removes spaces between single characters.
 func NewNormalizationDetector(mode DetectionMode) *NormalizationDetector {
 	return &NormalizationDetector{mode: mode}
 }
@@ -95,7 +95,7 @@ func (d *NormalizationDetector) Detect(ctx context.Context, input string) Result
 	}
 }
 
-// normalize removes character-level obfuscation based on the detector's mode
+// normalize removes character-level obfuscation based on the detector's mode.
 func (d *NormalizationDetector) normalize(input string) string {
 	normalized := input
 
