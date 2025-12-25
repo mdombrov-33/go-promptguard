@@ -12,7 +12,7 @@ type PerplexityDetector struct {
 	threshold float64 // Ratio of rare bigrams that triggers detection
 }
 
-// Common English character bigrams (frequent pairs)
+// Common English character bigrams (frequent pairs).
 var commonBigrams = map[string]bool{
 	"th": true, "he": true, "in": true, "er": true, "an": true,
 	"re": true, "on": true, "at": true, "en": true, "nd": true,

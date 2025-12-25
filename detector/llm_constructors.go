@@ -1,6 +1,6 @@
 package detector
 
-// NewOpenAIJudge creates an LLM judge for OpenAI API
+// NewOpenAIJudge creates an LLM judge for OpenAI API.
 func NewOpenAIJudge(apiKey, model string, opts ...LLMJudgeOption) LLMJudge {
 	return NewGenericLLMJudge(
 		"https://api.openai.com/v1/chat/completions",
@@ -10,7 +10,7 @@ func NewOpenAIJudge(apiKey, model string, opts ...LLMJudgeOption) LLMJudge {
 	)
 }
 
-// NewOpenRouterJudge creates an LLM judge for OpenRouter API
+// NewOpenRouterJudge creates an LLM judge for OpenRouter API.
 func NewOpenRouterJudge(apiKey, model string, opts ...LLMJudgeOption) LLMJudge {
 	return NewGenericLLMJudge(
 		"https://openrouter.ai/api/v1/chat/completions",
@@ -20,8 +20,8 @@ func NewOpenRouterJudge(apiKey, model string, opts ...LLMJudgeOption) LLMJudge {
 	)
 }
 
-// NewOllamaJudge creates an LLM judge for local Ollama models
-// Default endpoint: http://localhost:11434
+// NewOllamaJudge creates an LLM judge for local Ollama models.
+// Default endpoint: http://localhost:11434.
 func NewOllamaJudge(model string, opts ...LLMJudgeOption) LLMJudge {
 	return NewGenericLLMJudge(
 		"http://localhost:11434/v1/chat/completions",
@@ -31,8 +31,8 @@ func NewOllamaJudge(model string, opts ...LLMJudgeOption) LLMJudge {
 	)
 }
 
-// NewOllamaJudgeWithEndpoint creates an Ollama judge with custom endpoint
-// Useful if Ollama is running on a different host/port
+// NewOllamaJudgeWithEndpoint creates an Ollama judge with custom endpoint.
+// Useful if Ollama is running on a different host/port.
 func NewOllamaJudgeWithEndpoint(endpoint, model string, opts ...LLMJudgeOption) LLMJudge {
 	return NewGenericLLMJudge(
 		endpoint+"/v1/chat/completions",

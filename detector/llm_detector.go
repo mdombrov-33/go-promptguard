@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// LLMDetector is a detector that uses an LLM to classify inputs
-// This is the most accurate but slowest and most expensive detection method
+// LLMDetector is a detector that uses an LLM to classify inputs.
+// This is the most accurate but slowest and most expensive detection method.
 type LLMDetector struct {
 	judge   LLMJudge
 	timeout time.Duration

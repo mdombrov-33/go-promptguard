@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-// MultiDetector combines multiple detectors and aggregates their results
+// MultiDetector combines multiple detectors and aggregates their results,
 type MultiDetector struct {
 	detectors []Detector
 	config    Config
@@ -13,20 +13,6 @@ type MultiDetector struct {
 
 // New creates a new MultiDetector with the given configuration options.
 // By default, all implemented detectors are enabled with a threshold of 0.7.
-// Examples:
-//
-//	// Customize detectors
-//	guard := detector.New(
-//	    detector.WithThreshold(0.8),
-//	    detector.WithEntropy(false),
-//	    detector.WithNormalizationMode(detector.ModeAggressive),
-//	)
-//
-//	// With LLM
-//	judge := detector.NewOpenAIJudge(apiKey, "gpt-5")
-//	guard := detector.New(
-//	    detector.WithThreshold(0.8),
-//	    detector.WithLLM(judge, detector.LLMConditional),
 func New(opts ...Option) *MultiDetector {
 	cfg := defaultConfig()
 	for _, opt := range opts {
@@ -139,7 +125,6 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		finalScore = min(finalScore+bonus, 1.0)
 	}
 
-	// Calculate confidence based on detection results
 	finalConfidence := 0.0
 	if detectorsTriggered > 0 {
 		// Use max confidence from detectors, with bonus if multiple agree

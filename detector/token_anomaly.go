@@ -12,7 +12,6 @@ type TokenAnomalyDetector struct {
 	digitThreshold       float64 // Ratio of digits that triggers detection
 }
 
-// NewTokenAnomalyDetector creates a new token anomaly detector with default thresholds.
 func NewTokenAnomalyDetector() *TokenAnomalyDetector {
 	return &TokenAnomalyDetector{
 		specialCharThreshold: 0.4, // 40% special characters triggers detection
@@ -116,7 +115,6 @@ func (d *TokenAnomalyDetector) Detect(ctx context.Context, input string) Result 
 		}
 	}
 
-	// Confidence based on risk score, with bonus for longer inputs (more reliable)
 	confidence := 0.0
 	if maxScore > 0 {
 		confidence = maxScore

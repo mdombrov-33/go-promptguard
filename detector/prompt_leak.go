@@ -8,7 +8,6 @@ import (
 // PromptLeakDetector detects attempts to extract system prompts or instructions.
 type PromptLeakDetector struct{}
 
-// Compiled regex patterns for prompt leak detection
 var (
 	// Explicit system prompt extraction attempts
 	systemPromptRe = regexp.MustCompile(`(?i)(show|reveal|display|print|output|give me|what is|what's).*(system prompt|initial prompt|original prompt)`)
@@ -35,7 +34,6 @@ var (
 	authorityOverrideRe = regexp.MustCompile(`(?i)(IMPORTANT|URGENT|PRIORITY|ADMIN|SYSTEM|CRITICAL).*?:.*?(ignore|override|new|updated|changed).*(instruction|rule|prompt|command|directive)`)
 )
 
-// NewPromptLeakDetector creates a new prompt leak detector.
 func NewPromptLeakDetector() *PromptLeakDetector {
 	return &PromptLeakDetector{}
 }
@@ -44,7 +42,6 @@ func (d *PromptLeakDetector) Detect(ctx context.Context, input string) Result {
 	patterns := []DetectedPattern{}
 	maxScore := 0.0
 
-	// Check for context cancellation
 	select {
 	case <-ctx.Done():
 		return Result{Safe: true, RiskScore: 0.0, Confidence: 0.0}
@@ -135,7 +132,6 @@ func (d *PromptLeakDetector) Detect(ctx context.Context, input string) Result {
 		}
 	}
 
-	// Confidence matches risk score for clear patterns
 	confidence := 0.0
 	if maxScore > 0 {
 		confidence = maxScore

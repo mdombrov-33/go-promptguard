@@ -2,7 +2,7 @@ package detector
 
 import "time"
 
-// LLMJudgeOption allows customizing the GenericLLMJudge
+// LLMJudgeOption allows customizing the GenericLLMJudge.
 type LLMJudgeOption func(*GenericLLMJudge)
 
 // WithOutputFormat sets the LLM output format.

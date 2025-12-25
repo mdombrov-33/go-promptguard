@@ -5,11 +5,10 @@ import (
 	"regexp"
 )
 
-// RoleInjectionDetector detects role injection attacks using special tokens,
+// RoleInjectionDetector detects role injection attacks using special tokens.
 // XML/HTML tags, and role-switching phrases.
 type RoleInjectionDetector struct{}
 
-// Compiled regex patterns for role injection detection
 var (
 	// Special tokens used in model training (e.g., <|user|>, <|assistant|>)
 	specialTokensRe = regexp.MustCompile(`<\|(?:user|assistant|system|end|im_start|im_end)\|>`)
@@ -24,7 +23,6 @@ var (
 	conversationRe = regexp.MustCompile(`(?i)(user|assistant|system):\s+`)
 )
 
-// NewRoleInjectionDetector creates a new role injection detector.
 func NewRoleInjectionDetector() *RoleInjectionDetector {
 	return &RoleInjectionDetector{}
 }
@@ -33,7 +31,6 @@ func (d *RoleInjectionDetector) Detect(ctx context.Context, input string) Result
 	patterns := []DetectedPattern{}
 	maxScore := 0.0
 
-	// Check for context cancellation
 	select {
 	case <-ctx.Done():
 		return Result{Safe: true, RiskScore: 0.0, Confidence: 0.0}
@@ -88,7 +85,6 @@ func (d *RoleInjectionDetector) Detect(ctx context.Context, input string) Result
 		}
 	}
 
-	// Confidence matches risk score for clear patterns
 	confidence := 0.0
 	if maxScore > 0 {
 		confidence = maxScore
