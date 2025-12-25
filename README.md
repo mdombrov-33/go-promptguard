@@ -312,11 +312,12 @@ For higher accuracy on sophisticated attacks, you can add an LLM judge.
 - **OpenRouter**: https://openrouter.ai/keys (Claude, Gemini, 100+ models)
 - **Ollama**: No key needed (runs locally)
 
-**Library usage:**
+**Library usage**:
 
 ```go
 // OpenAI
-judge := detector.NewOpenAIJudge("sk-...", "gpt-5")
+apiKey := "sk-..."  // Your API key
+judge := detector.NewOpenAIJudge(apiKey, "gpt-5")
 guard := detector.New(detector.WithLLM(judge, detector.LLMConditional))
 
 // OpenRouter (for Claude, Gemini, etc.)
@@ -351,7 +352,7 @@ if result.LLMResult != nil {
 judge := detector.NewOpenAIJudge("sk-...", "gpt-5", detector.WithSystemPrompt("Your custom prompt"))
 ```
 
-**CLI usage:**
+**CLI usage** (uses `.env` for configuration):
 
 Create `.env` file in your project directory:
 
