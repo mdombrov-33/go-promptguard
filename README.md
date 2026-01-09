@@ -6,7 +6,7 @@
 
 Detect prompt injection attacks in Go applications. Block malicious inputs before they reach your LLM.
 
-Featured in **December 2025 AI Security Hub curated tools list**  
+Featured in **December 2025 AI Security Hub curated tools list.**  
 [See LinkedIn post](https://www.linkedin.com/feed/update/urn:li:activity:7413213546215378944/)
 
 ```go
