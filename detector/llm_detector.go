@@ -6,7 +6,6 @@ import (
 )
 
 // LLMDetector is a detector that uses an LLM to classify inputs.
-// This is the most accurate but slowest and most expensive detection method.
 type LLMDetector struct {
 	judge   LLMJudge
 	timeout time.Duration
@@ -50,17 +49,18 @@ func (d *LLMDetector) Detect(ctx context.Context, input string) Result {
 	// Convert LLMResult to Result
 	patterns := []DetectedPattern{}
 	if llmResult.IsAttack {
+		// Use the specific attack type from LLM if available
+		patternType := "llm_classification" // fallback
+		if llmResult.AttackType != "" && llmResult.AttackType != "none" {
+			patternType = "llm_" + llmResult.AttackType
+		}
+
 		pattern := DetectedPattern{
-			Type:  "llm_classification",
+			Type:  patternType,
 			Score: llmResult.Confidence,
 			Matches: []string{
 				"LLM detected attack",
 			},
-		}
-
-		// Add attack type if available
-		if llmResult.AttackType != "" && llmResult.AttackType != "none" {
-			pattern.Type = "llm_" + llmResult.AttackType
 		}
 
 		// Add reasoning if available

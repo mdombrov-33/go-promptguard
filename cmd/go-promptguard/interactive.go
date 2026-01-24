@@ -215,13 +215,15 @@ func (m *model) updateGuard() {
 			if model == "" {
 				model = "gpt-5"
 			}
-			judge = detector.NewOpenAIJudge(os.Getenv("OPENAI_API_KEY"), model)
+			judge = detector.NewOpenAIJudge(os.Getenv("OPENAI_API_KEY"), model,
+				detector.WithOutputFormat(detector.LLMStructured))
 		case "openrouter":
 			model := os.Getenv("OPENROUTER_MODEL")
 			if model == "" {
 				model = "anthropic/claude-sonnet-4.5"
 			}
-			judge = detector.NewOpenRouterJudge(os.Getenv("OPENROUTER_API_KEY"), model)
+			judge = detector.NewOpenRouterJudge(os.Getenv("OPENROUTER_API_KEY"), model,
+				detector.WithOutputFormat(detector.LLMStructured))
 		case "ollama":
 			ollamaHost := os.Getenv("OLLAMA_HOST")
 			if ollamaHost == "" {
@@ -234,9 +236,13 @@ func (m *model) updateGuard() {
 			}
 
 			if ollamaHost != "" {
-				judge = detector.NewOllamaJudgeWithEndpoint(ollamaHost, ollamaModel, detector.WithLLMTimeout(60*time.Second))
+				judge = detector.NewOllamaJudgeWithEndpoint(ollamaHost, ollamaModel,
+					detector.WithLLMTimeout(60*time.Second),
+					detector.WithOutputFormat(detector.LLMStructured))
 			} else {
-				judge = detector.NewOllamaJudge(ollamaModel, detector.WithLLMTimeout(60*time.Second))
+				judge = detector.NewOllamaJudge(ollamaModel,
+					detector.WithLLMTimeout(60*time.Second),
+					detector.WithOutputFormat(detector.LLMStructured))
 			}
 		}
 
