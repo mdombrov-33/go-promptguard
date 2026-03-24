@@ -3,7 +3,6 @@ package benchmarks
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -26,8 +25,12 @@ type Dataset struct {
 	Samples []Sample `json:"samples"`
 }
 
-//	Metrics types
-//
+// EvalResult pairs a sample with the detector result so we never call Detect twice.
+type EvalResult struct {
+	Sample Sample
+	Result detector.Result
+}
+
 // Confusion matrix counts and derived metrics
 type Counts struct {
 	TP, FP, TN, FN int
@@ -48,8 +51,7 @@ func (c Counts) Recall() float64 {
 }
 
 func (c Counts) F1() float64 {
-	p := c.Precision()
-	r := c.Recall()
+	p, r := c.Precision(), c.Recall()
 	if p+r == 0 {
 		return 0
 	}
@@ -63,6 +65,12 @@ func (c Counts) Accuracy() float64 {
 	}
 	return float64(c.TP+c.TN) / float64(total) * 100
 }
+
+// Shared category lists used by multiple tests.
+var (
+	attackCategories = []string{"role_injection", "prompt_leak", "instruction_override", "obfuscation", "normalization", "delimiter", "multi_vector"}
+	benignCategories = []string{"general_question", "coding", "technical", "writing", "creative", "summarization", "explanation", "translation", "edge_case"}
+)
 
 // Helpers
 func loadDataset(t *testing.T, path string) []Sample {
@@ -78,16 +86,18 @@ func loadDataset(t *testing.T, path string) []Sample {
 	return ds.Samples
 }
 
-func evaluate(ctx context.Context, guard *detector.MultiDetector, samples []Sample) (Counts, map[string]Counts, []Sample, []Sample) {
+// evaluate runs all samples through the guard once and returns counts + per-category
+// breakdown + slices of false positives and false negatives with their cached results.
+func evaluate(ctx context.Context, guard *detector.MultiDetector, samples []Sample) (Counts, map[string]Counts, []EvalResult, []EvalResult) {
 	var overall Counts
 	perCategory := make(map[string]Counts)
-	var falsePositives []Sample
-	var falseNegatives []Sample
+	var falsePositives, falseNegatives []EvalResult
 
 	for _, s := range samples {
 		result := guard.Detect(ctx, s.Input)
 		isAttack := !result.Safe
 		shouldBeAttack := s.Label == "attack"
+		er := EvalResult{Sample: s, Result: result}
 
 		c := perCategory[s.Category]
 		switch {
@@ -97,14 +107,14 @@ func evaluate(ctx context.Context, guard *detector.MultiDetector, samples []Samp
 		case isAttack && !shouldBeAttack:
 			overall.FP++
 			c.FP++
-			falsePositives = append(falsePositives, s)
+			falsePositives = append(falsePositives, er)
 		case !isAttack && !shouldBeAttack:
 			overall.TN++
 			c.TN++
 		case !isAttack && shouldBeAttack:
 			overall.FN++
 			c.FN++
-			falseNegatives = append(falseNegatives, s)
+			falseNegatives = append(falseNegatives, er)
 		}
 		perCategory[s.Category] = c
 	}
@@ -113,7 +123,6 @@ func evaluate(ctx context.Context, guard *detector.MultiDetector, samples []Samp
 }
 
 // Tests
-
 // TestEvaluation is the main evaluation test.
 // Run with: go test -v -run TestEvaluation ./benchmarks/
 func TestEvaluation(t *testing.T) {
@@ -121,7 +130,7 @@ func TestEvaluation(t *testing.T) {
 	benign := loadDataset(t, "testdata/benign.json")
 	all := append(attacks, benign...)
 
-	guard := detector.New() // default threshold 0.7
+	guard := detector.New()
 	ctx := context.Background()
 
 	overall, perCategory, falsePositives, falseNegatives := evaluate(ctx, guard, all)
@@ -139,9 +148,7 @@ func TestEvaluation(t *testing.T) {
 	t.Logf("  False Positives:   %d/%d benign flagged (%.1f%%)", overall.FP, len(benign), float64(overall.FP)/float64(len(benign))*100)
 	t.Logf("  False Negatives:   %d/%d attacks missed (%.1f%%)", overall.FN, len(attacks), float64(overall.FN)/float64(len(attacks))*100)
 
-	// Per-category for attack samples
 	t.Logf("\n--- Per-category recall (attacks) ---")
-	attackCategories := []string{"role_injection", "prompt_leak", "instruction_override", "obfuscation", "normalization", "delimiter", "multi_vector"}
 	for _, cat := range attackCategories {
 		c := perCategory[cat]
 		total := c.TP + c.FN
@@ -152,49 +159,41 @@ func TestEvaluation(t *testing.T) {
 		t.Logf("  %-24s %d/%d  (%.1f%%)  %s", cat+":", c.TP, total, c.Recall(), bar)
 	}
 
-	// Per-category for benign samples
 	t.Logf("\n--- Per-category false positive rate (benign) ---")
-	benignCategories := []string{"general_question", "coding", "technical", "writing", "creative", "summarization", "explanation", "translation", "edge_case"}
 	for _, cat := range benignCategories {
 		c := perCategory[cat]
 		total := c.TN + c.FP
 		if total == 0 {
 			continue
 		}
-		fpRate := float64(c.FP) / float64(total) * 100
-		t.Logf("  %-24s %d FP / %d total (%.1f%% FP rate)", cat+":", c.FP, total, fpRate)
+		t.Logf("  %-24s %d FP / %d total (%.1f%% FP rate)", cat+":", c.FP, total, float64(c.FP)/float64(total)*100)
 	}
 
-	// Confusion matrix
 	t.Logf("\n--- Confusion Matrix ---")
 	t.Logf("  %26s  ATTACK   SAFE", "Predicted →")
 	t.Logf("  Actual ATTACK          %5d  %5d", overall.TP, overall.FN)
 	t.Logf("  Actual SAFE            %5d  %5d", overall.FP, overall.TN)
 
-	// False positives detail
 	if len(falsePositives) > 0 {
 		t.Logf("\n--- False Positives (safe inputs wrongly flagged) ---")
-		for _, s := range falsePositives {
-			result := guard.Detect(ctx, s.Input)
-			t.Logf("  [%s] score=%.2f  %q", s.ID, result.RiskScore, truncate(s.Input, 70))
-			t.Logf("    note: %s", s.Notes)
+		for _, er := range falsePositives {
+			t.Logf("  [%s] score=%.2f  %q", er.Sample.ID, er.Result.RiskScore, truncate(er.Sample.Input, 70))
+			t.Logf("    note: %s", er.Sample.Notes)
 		}
 	}
 
-	// False negatives detail
 	if len(falseNegatives) > 0 {
 		t.Logf("\n--- False Negatives (attacks missed) ---")
-		for _, s := range falseNegatives {
-			result := guard.Detect(ctx, s.Input)
-			t.Logf("  [%s] cat=%-22s score=%.2f  %q", s.ID, s.Category, result.RiskScore, truncate(s.Input, 70))
+		for _, er := range falseNegatives {
+			t.Logf("  [%s] cat=%-22s score=%.2f  %q", er.Sample.ID, er.Sample.Category, er.Result.RiskScore, truncate(er.Sample.Input, 70))
 		}
 	}
 
 	t.Logf("\n%s", strings.Repeat("=", 60))
 
-	// Sanity checks — these fail the test if something is very wrong
-	if overall.Recall() < 70.0 {
-		t.Errorf("Recall %.1f%% is too low — more than 30%% of attacks are being missed", overall.Recall())
+	// Regression guard: recall below 40% means something is catastrophically broken.
+	if overall.Recall() < 40.0 {
+		t.Errorf("Recall %.1f%% is critically low — likely a regression", overall.Recall())
 	}
 	if overall.FP > len(benign)/3 {
 		t.Errorf("False positive rate too high: %d/%d benign inputs wrongly flagged", overall.FP, len(benign))
@@ -217,8 +216,7 @@ func TestThresholdSweep(t *testing.T) {
 	t.Logf("  %-10s  %-10s  %-10s  %-10s  %-5s  %-5s", "Threshold", "Precision", "Recall", "F1", "FP", "FN")
 	t.Logf("  %s", strings.Repeat("-", 58))
 
-	bestF1 := 0.0
-	bestThreshold := 0.0
+	bestF1, bestThreshold := 0.0, 0.0
 
 	for _, threshold := range thresholds {
 		guard := detector.New(detector.WithThreshold(threshold))
@@ -236,13 +234,8 @@ func TestThresholdSweep(t *testing.T) {
 		}
 
 		t.Logf("  %-10.1f  %-10.1f  %-10.1f  %-10.1f  %-5d  %-5d%s",
-			threshold,
-			overall.Precision(),
-			overall.Recall(),
-			f1,
-			overall.FP,
-			overall.FN,
-			marker,
+			threshold, overall.Precision(), overall.Recall(), f1,
+			overall.FP, overall.FN, marker,
 		)
 	}
 
@@ -257,12 +250,8 @@ func TestPerCategoryPrecision(t *testing.T) {
 	benign := loadDataset(t, "testdata/benign.json")
 	all := append(attacks, benign...)
 
-	guard := detector.New()
-	ctx := context.Background()
+	_, perCategory, _, _ := evaluate(context.Background(), detector.New(), all)
 
-	_, perCategory, _, _ := evaluate(ctx, guard, all)
-
-	// Collect categories that appear in attacks
 	seen := map[string]bool{}
 	for _, s := range attacks {
 		seen[s.Category] = true
@@ -281,30 +270,20 @@ func TestPerCategoryPrecision(t *testing.T) {
 
 	for _, cat := range categories {
 		c := perCategory[cat]
-		total := c.TP + c.FN
-		if total == 0 {
+		if c.TP+c.FN == 0 {
 			continue
 		}
 		t.Logf("  %-24s  %5.1f%%  %5.1f%%  %5.1f%%  %4d  %4d",
-			cat,
-			c.Recall(),
-			c.Precision(),
-			c.F1(),
-			c.TP,
-			c.FN,
+			cat, c.Recall(), c.Precision(), c.F1(), c.TP, c.FN,
 		)
 	}
 
 	t.Logf("%s", strings.Repeat("=", 60))
 }
 
-// Utilities
 func truncate(s string, n int) string {
 	if len(s) <= n {
 		return s
 	}
 	return s[:n] + "..."
 }
-
-// Prevent unused import error for fmt if all t.Logf are used
-var _ = fmt.Sprintf

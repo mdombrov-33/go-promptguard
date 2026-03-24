@@ -64,13 +64,7 @@ func New(opts ...Option) *MultiDetector {
 }
 
 // Detect runs all enabled detectors and combines their results.
-// Risk scoring algorithm:
-//   - Takes the highest individual risk score from any detector
-//   - Adds a 0.1 bonus for each additional pattern detected (capped at 1.0)
-//   - Confidence represents certainty of classification:
-//   - When detectors find patterns: max confidence + 0.05 bonus if multiple detectors agree
-//   - When no patterns found: high confidence (~0.85-0.90) it's safe
-//
+// Risk score is computed by computeWeightedScore (see scoring.go).
 // The input is considered unsafe if the final risk score >= threshold.
 func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 	if md.config.MaxInputLength > 0 && len(input) > md.config.MaxInputLength {
@@ -117,13 +111,7 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		}
 	}
 
-	// Calculate final risk score using our algorithm:
-	// final_score = max(individual_scores) + 0.1 × (num_additional_patterns - 1)
-	finalScore := maxScore
-	if len(allPatterns) > 1 {
-		bonus := 0.1 * float64(len(allPatterns)-1)
-		finalScore = min(finalScore+bonus, 1.0)
-	}
+	finalScore := computeWeightedScore(allPatterns)
 
 	finalConfidence := 0.0
 	if detectorsTriggered > 0 {
@@ -175,11 +163,7 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 			maxScore = llmResult.RiskScore
 		}
 
-		finalScore = maxScore
-		if len(allPatterns) > 1 {
-			bonus := 0.1 * float64(len(allPatterns)-1)
-			finalScore = min(finalScore+bonus, 1.0)
-		}
+		finalScore = computeWeightedScore(allPatterns)
 
 		// Recalculate confidence including LLM result
 		if llmResult.RiskScore > 0 {

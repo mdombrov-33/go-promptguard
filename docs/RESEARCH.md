@@ -553,7 +553,7 @@ Based on the attack patterns above, go-promptguard implements a multi-layered de
 
 1. **Fast layer** (always enabled): Pattern-based regex detectors
 2. **Statistical layer** (configurable): Entropy, perplexity, token anomaly
-3. **Risk aggregation**: Highest individual score + 0.1 bonus per additional pattern
+3. **Risk aggregation**: Weighted sum — each detector contributes `score × weight`, where semantic detectors (role injection, prompt leak, instruction override) have weight 1.0 and statistical detectors (entropy, perplexity, token anomaly) are discounted to 0.45–0.55. Final score = `min(Σ score_i × weight_i, 1.0)`
 
 **Thresholds:**
 

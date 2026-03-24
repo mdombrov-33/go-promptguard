@@ -63,9 +63,10 @@ Input → MultiDetector
 
 **Risk calculation:**
 
-- Start with highest detector score
-- Add +0.1 for each additional pattern detected (capped at 1.0)
-- Example: 0.9 (role injection) + 0.1 (obfuscation) = 1.0
+- Each detector that fires contributes `score × weight` to the total
+- Detector weights reflect reliability: semantic detectors (role injection, prompt leak, instruction override) have weight 1.0; statistical detectors (entropy, perplexity, token anomaly) are discounted to 0.45–0.55 so they cannot trigger alone at borderline scores
+- Multiple detectors firing naturally combine: `final = min(Σ score_i × weight_i, 1.0)`
+- Example: role injection (0.9 × 1.0) + obfuscation (0.8 × 0.9) = 0.9 + 0.72 = 1.0 (capped)
 
 **Performance:**
 
