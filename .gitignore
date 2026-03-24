@@ -5,9 +5,6 @@ dist/
 # Batch processing results
 batch_results/
 
-# Test input files
-testdata
-
 # Benchmark artifacts
 *.prof
 *.test
