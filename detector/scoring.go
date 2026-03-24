@@ -23,17 +23,6 @@ var detectorWeights = map[string]float64{
 
 const defaultWeight = 0.70
 
-// weightForPattern returns the weight for a detected pattern based on its type prefix.
-// Pattern types follow the format "category_subtype" (e.g. "role_injection_special_token").
-func weightForPattern(patternType string) float64 {
-	for category, weight := range detectorWeights {
-		if strings.HasPrefix(patternType, category) {
-			return weight
-		}
-	}
-	return defaultWeight
-}
-
 // computeWeightedScore replaces the old "max + 0.1 bonus" algorithm.
 //
 // Formula: final = min(Σ(score_i × weight_i), 1.0)
