@@ -247,6 +247,8 @@ func (m *model) updateGuard() {
 		}
 
 		if judge != nil {
+			go judge.Warmup(context.Background())
+
 			var mode detector.LLMRunMode
 			switch m.llmMode {
 			case 0:

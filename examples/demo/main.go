@@ -47,6 +47,9 @@ func main() {
 		structuredJudge := detector.NewOllamaJudge("llama3.1:8b",
 			detector.WithOutputFormat(detector.LLMStructured),
 		)
+		// Block until model is loaded — in a real app you'd do go judge.Warmup(ctx) at startup
+		fmt.Println("Warming up model...")
+		structuredJudge.Warmup(ctx)
 		structuredGuard := detector.New(detector.WithLLM(structuredJudge, detector.LLMFallback))
 		printResult("subtle attack (LLM structured)", subtle, structuredGuard.Detect(ctx, subtle))
 

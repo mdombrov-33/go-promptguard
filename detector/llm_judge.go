@@ -5,6 +5,9 @@ import "context"
 // LLMJudge is the interface for LLM-based prompt injection detection.
 type LLMJudge interface {
 	Judge(ctx context.Context, input string) (LLMResult, error)
+	// Warmup pre-loads the model to avoid cold start latency on the first real call.
+	// No-op for remote APIs (OpenAI, OpenRouter). Useful for local models (Ollama).
+	Warmup(ctx context.Context)
 }
 
 type LLMResult struct {

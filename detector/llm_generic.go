@@ -50,6 +50,13 @@ func NewGenericLLMJudge(endpoint, apiKey, model string, opts ...LLMJudgeOption) 
 	return judge
 }
 
+// Warmup pre-loads the model by sending a dummy request.
+// Call it as a goroutine right after creating an Ollama judge so the model
+// is ready in memory before real inputs arrive: go judge.Warmup(ctx)
+func (j *GenericLLMJudge) Warmup(ctx context.Context) {
+	j.Judge(ctx, "test")
+}
+
 // GetTimeout returns the configured timeout
 func (j *GenericLLMJudge) GetTimeout() time.Duration {
 	return j.timeout

@@ -19,6 +19,8 @@ func (m *MockLLMJudge) Judge(ctx context.Context, input string) (LLMResult, erro
 	return m.result, m.err
 }
 
+func (m *MockLLMJudge) Warmup(ctx context.Context) {}
+
 func TestLLMDetector_Attack(t *testing.T) {
 	mockJudge := &MockLLMJudge{
 		result: LLMResult{

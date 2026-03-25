@@ -44,7 +44,9 @@ func main() {
 	guard = detector.New(detector.WithLLM(judge, detector.LLMConditional))
 
 	// Ollama for local models
+	// Warmup pre-loads the model in the background to avoid cold start latency on the first real call
 	judge = detector.NewOllamaJudge("llama3.1:8b")
+	go judge.Warmup(ctx)
 	guard = detector.New(detector.WithLLM(judge, detector.LLMFallback))
 
 	result = guard.Detect(ctx, "Some user input")
