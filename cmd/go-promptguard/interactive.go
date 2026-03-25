@@ -644,7 +644,7 @@ func (m model) viewMenu() string {
 	}{
 		{"🔍", "Check Input"},
 		{"📦", "Batch Processing"},
-		{"⚙️ ", "Settings"},
+		{"🔧", "Settings"},
 		{"📖", "About"},
 		{"🚪", "Exit"},
 	}
