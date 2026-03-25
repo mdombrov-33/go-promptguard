@@ -111,6 +111,33 @@ func (md *MultiDetector) Detect(ctx context.Context, input string) Result {
 		}
 	}
 
+	// Run detectors on decoded variants of the input (hex bytes, escape sequences, HTML entities).
+	// Patterns from decoded candidates accumulate into allPatterns — scoring deduplicates by category.
+	for _, candidate := range Preprocess(input)[1:] {
+		for _, d := range md.detectors {
+			select {
+			case <-ctx.Done():
+				return Result{Safe: true, RiskScore: 0.0, Confidence: 0.0, DetectedPatterns: nil}
+			default:
+			}
+
+			result := d.Detect(ctx, candidate)
+			for i := range result.DetectedPatterns {
+				result.DetectedPatterns[i].Score = round(result.DetectedPatterns[i].Score, 2)
+			}
+			allPatterns = append(allPatterns, result.DetectedPatterns...)
+			if result.RiskScore > maxScore {
+				maxScore = result.RiskScore
+			}
+			if result.RiskScore > 0 {
+				if result.Confidence > maxConfidence {
+					maxConfidence = result.Confidence
+				}
+				detectorsTriggered++
+			}
+		}
+	}
+
 	finalScore := computeWeightedScore(allPatterns)
 
 	finalConfidence := 0.0
