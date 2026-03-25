@@ -438,9 +438,10 @@ See [`.env.example`](.env.example) for all configuration options. The CLI auto-d
 - [x] CLI tool (interactive TUI, check, batch, server)
 - [x] Pre-built binaries for Linux/macOS/Windows
 - [x] Performance benchmarks
-- [ ] Prometheus metrics
 - [ ] Framework integrations (Gin, Echo, gRPC middleware)
-- [ ] Additional attack patterns (jailbreak techniques, payload splitting)
+- [ ] Defense pipeline (prompt wrapping, output validation, sanitization)
+- [ ] Prometheus metrics
+- [ ] Additional attack patterns (multi-turn attacks, payload splitting, token smuggling)
 
 ## Research
 
