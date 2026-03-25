@@ -5,21 +5,17 @@ import (
 	"regexp"
 )
 
-// RoleInjectionDetector detects role injection attacks using special tokens.
-// XML/HTML tags, and role-switching phrases.
 type RoleInjectionDetector struct{}
 
 var (
-	// Special tokens used in model training (e.g., <|user|>, <|assistant|>)
-	specialTokensRe = regexp.MustCompile(`<\|(?:user|assistant|system|end|im_start|im_end)\|>`)
+	specialTokensRe = regexp.MustCompile(`<\|(?:user|assistant|system|end|im_start|im_end|endoftext)\|>`)
 
-	// XML/HTML tags that mimic role markers
-	xmlTagsRe = regexp.MustCompile(`(?i)</?(?:user|assistant|system|admin|root)>`)
+	xmlTagsRe = regexp.MustCompile(`(?i)</?(?:user|assistant|system|admin|root|inst)>`)
 
-	// Role-switching phrases that attempt to change the LLM's behavior
-	roleSwitchingRe = regexp.MustCompile(`(?i)(you are now|act as|pretend to be|assume the role of|assume the role|switch to|become)\s+(an?\s+)?(admin|root|system|assistant|developer)`)
+	roleSwitchingRe = regexp.MustCompile(`(?i)(you are now|act as|pretend (to be|you are|that you( are)?)|assume the role (of)?|roleplay as|behave as|respond as|imagine you are|speak as|switch to|become|from now on you are)\b`)
 
-	// Multi-turn conversation injection (embedding fake conversations)
+	jailbreakVocabRe = regexp.MustCompile(`(?i)(jailbreak|developer mode|dan mode|unrestricted mode|god mode|evil mode|opposite mode|anti-gpt|no content (policy|filter|restriction)|(bypass|disable|remove) (safety|filter|restriction|guideline|content policy)|you have no (restrictions?|rules?|filters?|guidelines?|limits?|content policy))`)
+
 	conversationRe = regexp.MustCompile(`(?i)(user|assistant|system):\s+`)
 )
 
@@ -37,7 +33,6 @@ func (d *RoleInjectionDetector) Detect(ctx context.Context, input string) Result
 	default:
 	}
 
-	// Check special tokens (highest risk: 0.9)
 	if matches := specialTokensRe.FindAllString(input, -1); len(matches) > 0 {
 		patterns = append(patterns, DetectedPattern{
 			Type:    "role_injection_special_token",
@@ -49,7 +44,6 @@ func (d *RoleInjectionDetector) Detect(ctx context.Context, input string) Result
 		}
 	}
 
-	// Check XML/HTML tags (high risk: 0.7)
 	if matches := xmlTagsRe.FindAllString(input, -1); len(matches) > 0 {
 		patterns = append(patterns, DetectedPattern{
 			Type:    "role_injection_xml_tag",
@@ -61,19 +55,28 @@ func (d *RoleInjectionDetector) Detect(ctx context.Context, input string) Result
 		}
 	}
 
-	// Check role-switching phrases (high risk: 0.7)
 	if matches := roleSwitchingRe.FindAllString(input, -1); len(matches) > 0 {
 		patterns = append(patterns, DetectedPattern{
 			Type:    "role_injection_role_switch",
-			Score:   0.7,
+			Score:   0.75,
 			Matches: matches,
 		})
-		if 0.7 > maxScore {
-			maxScore = 0.7
+		if 0.75 > maxScore {
+			maxScore = 0.75
 		}
 	}
 
-	// Check conversation injection (high risk: 0.7)
+	if matches := jailbreakVocabRe.FindAllString(input, -1); len(matches) > 0 {
+		patterns = append(patterns, DetectedPattern{
+			Type:    "role_injection_jailbreak_vocab",
+			Score:   0.9,
+			Matches: matches,
+		})
+		if 0.9 > maxScore {
+			maxScore = 0.9
+		}
+	}
+
 	if matches := conversationRe.FindAllString(input, -1); len(matches) > 0 {
 		patterns = append(patterns, DetectedPattern{
 			Type:    "role_injection_conversation",
@@ -88,7 +91,6 @@ func (d *RoleInjectionDetector) Detect(ctx context.Context, input string) Result
 	confidence := 0.0
 	if maxScore > 0 {
 		confidence = maxScore
-		// Boost confidence slightly if multiple patterns match
 		if len(patterns) > 1 {
 			confidence = min(confidence+0.05, 1.0)
 		}

@@ -9,24 +9,20 @@ import "strings"
 // Statistical detectors (entropy, perplexity, token_anomaly) get lower weights
 // because they produce more noise and should not flag inputs on their own.
 var detectorWeights = map[string]float64{
-	"role_injection":         1.00,
-	"prompt_leak":            1.00,
-	"instruction_override":   1.00,
-	"normalization":          0.90,
-	"obfuscation":            0.90,
-	"delimiter":              0.85,
-	"entropy":                0.55,
-	"perplexity":             0.50,
-	"token_anomaly":          0.45,
-	"llm":                    1.00, // LLM judge is high-trust — pass its confidence through unchanged
+	"role_injection":       1.00,
+	"prompt_leak":          1.00,
+	"instruction_override": 1.00,
+	"normalization":        0.90,
+	"obfuscation":          0.90,
+	"delimiter":            0.85,
+	"entropy":              0.55,
+	"perplexity":           0.50,
+	"token_anomaly":        0.45,
+	"llm":                  1.00, // LLM judge is high-trust — pass its confidence through unchanged
 }
 
 const defaultWeight = 0.70
 
-// computeWeightedScore replaces the old "max + 0.1 bonus" algorithm.
-//
-// Formula: final = min(Σ(score_i × weight_i), 1.0)
-//
 // Each detector that fires contributes score × weight to the total.
 // Strong detectors (weight ~1.0) pass their score through nearly unchanged.
 // Weak detectors (weight ~0.5) are discounted, so they cannot cross the

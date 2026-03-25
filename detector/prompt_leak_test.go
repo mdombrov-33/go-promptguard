@@ -178,7 +178,7 @@ func TestPromptLeakDetector_ConfigQuestions(t *testing.T) {
 			result := detector.Detect(ctx, tt.input)
 
 			assert.False(t, result.Safe, "Should be unsafe")
-			assert.Equal(t, 0.7, result.RiskScore, "Risk score should be 0.7")
+			assert.GreaterOrEqual(t, result.RiskScore, 0.8, "Risk score should be >= 0.8")
 			require.NotEmpty(t, result.DetectedPatterns)
 			assert.Equal(t, "prompt_leak_config", result.DetectedPatterns[0].Type)
 		})
