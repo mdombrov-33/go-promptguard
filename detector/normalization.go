@@ -15,7 +15,7 @@ type NormalizationDetector struct {
 var (
 	// Detect single characters separated by dots, dashes, underscores
 	// Example: "I.g.n.o.r.e" or "I-g-n-o-r-e"
-	charSeparatorRe = regexp.MustCompile(`\b([a-zA-Z])[.\-_*]+([a-zA-Z])[.\-_*]+([a-zA-Z])`)
+	charSeparatorRe = regexp.MustCompile(`\b([a-zA-Z])[.\-_*·•–—\x{200B}]+([a-zA-Z])[.\-_*·•–—\x{200B}]+([a-zA-Z])`)
 
 	// Detect single characters separated by spaces
 	// Example: "I g n o r e"
@@ -102,7 +102,7 @@ func (d *NormalizationDetector) normalize(input string) string {
 	// Balanced mode: remove dots, dashes, underscores, asterisks between single chars
 	// Convert "I.g.n.o.r.e" -> "Ignore"
 	// More aggressive replacement: remove ALL separator chars between letters
-	sepPattern := regexp.MustCompile(`([a-zA-Z])[.\-_*]+`)
+	sepPattern := regexp.MustCompile(`([a-zA-Z])[.\-_*·•–—\x{200B}]+`)
 	for sepPattern.MatchString(normalized) {
 		normalized = sepPattern.ReplaceAllString(normalized, "$1")
 	}
