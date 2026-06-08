@@ -458,6 +458,10 @@ func (m model) viewBatchResults() string {
 	content.WriteString("  [S] Save as CSV\n")
 	content.WriteString("  [J] Save as JSON")
 
+	if m.batchSaveMsg != "" {
+		content.WriteString(fmt.Sprintf("\n\n✓ %s", m.batchSaveMsg))
+	}
+
 	panel := panelStyle.Width(m.getPanelWidth()).Render(content.String())
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, panel))
 

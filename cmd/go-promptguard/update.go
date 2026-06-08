@@ -311,19 +311,28 @@ func (m model) updateBatchResults(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.batchSummary != nil {
 				timestamp := time.Now().Format("2006-01-02_15-04-05")
 				filename := fmt.Sprintf("batch_results/results_%s.csv", timestamp)
-				ExportResults(m.batchSummary, filename)
+				if err := ExportResults(m.batchSummary, filename); err != nil {
+					m.batchSaveMsg = fmt.Sprintf("Error saving: %v", err)
+				} else {
+					m.batchSaveMsg = fmt.Sprintf("Saved to %s", filename)
+				}
 			}
 		case "j":
 			if m.batchSummary != nil {
 				timestamp := time.Now().Format("2006-01-02_15-04-05")
 				filename := fmt.Sprintf("batch_results/results_%s.json", timestamp)
-				ExportResults(m.batchSummary, filename)
+				if err := ExportResults(m.batchSummary, filename); err != nil {
+					m.batchSaveMsg = fmt.Sprintf("Error saving: %v", err)
+				} else {
+					m.batchSaveMsg = fmt.Sprintf("Saved to %s", filename)
+				}
 			}
 		case "enter", "space":
 			m.screen = batchScreen
 			m.fileInput.SetValue("")
 			m.fileInput.Focus()
 			m.batchProcessing = false
+			m.batchSaveMsg = ""
 			return m, textinput.Blink
 		}
 	case batchCompleteMsg:

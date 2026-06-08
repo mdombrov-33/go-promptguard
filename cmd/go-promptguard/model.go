@@ -53,6 +53,7 @@ type model struct {
 	batchTotal         int
 	batchProcessing    bool
 	batchError         error
+	batchSaveMsg       string
 	checking           bool
 	warming            bool
 	settingsChoice     int
