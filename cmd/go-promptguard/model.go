@@ -54,7 +54,9 @@ type model struct {
 	batchProcessing    bool
 	batchError         error
 	checking           bool
+	warming            bool
 	settingsChoice     int
+	initCmd            tea.Cmd
 }
 
 func initialModel() model {
@@ -136,11 +138,11 @@ func initialModel() model {
 		}
 	}
 
-	m.updateGuard()
+	m.initCmd = m.updateGuard()
 	return m
 }
 
-func (m *model) updateGuard() {
+func (m *model) updateGuard() tea.Cmd {
 	opts := []detector.Option{
 		detector.WithThreshold(m.threshold),
 		detector.WithRoleInjection(m.enableRoleInj),
@@ -196,7 +198,8 @@ func (m *model) updateGuard() {
 		}
 
 		if judge != nil {
-			go judge.Warmup(context.Background())
+			m.warming = true
+			warmupCmd := makeWarmupCmd(judge)
 
 			var mode detector.LLMRunMode
 			switch m.llmMode {
@@ -210,12 +213,23 @@ func (m *model) updateGuard() {
 				mode = detector.LLMConditional
 			}
 			opts = append(opts, detector.WithLLM(judge, mode))
+			m.guard = detector.New(opts...)
+			return warmupCmd
 		}
 	}
 
+	m.warming = false
 	m.guard = detector.New(opts...)
+	return nil
+}
+
+func makeWarmupCmd(judge detector.LLMJudge) tea.Cmd {
+	return func() tea.Msg {
+		judge.Warmup(context.Background())
+		return warmupCompleteMsg{}
+	}
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return m.initCmd
 }

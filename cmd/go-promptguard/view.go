@@ -96,6 +96,15 @@ func (m model) viewCheck() string {
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, title))
 	s.WriteString("\n\n")
 
+	if m.warming {
+		warmingMsg := fmt.Sprintf("⏳ Warming up %s...", capitalizeProviderName(m.llmProvider))
+		warming := lipgloss.NewStyle().Foreground(warningColor).Render(warmingMsg)
+		s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, warming))
+		s.WriteString("\n\n")
+		s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, helpStyle.Render("Esc: Back")))
+		return s.String()
+	}
+
 	inputPanel := panelStyle.Width(m.getPanelWidth()).Render(m.input.View())
 	s.WriteString(lipgloss.Place(m.width, 0, lipgloss.Center, lipgloss.Top, inputPanel))
 
@@ -181,11 +190,10 @@ func (m model) viewResults() string {
 	}
 	metricsContent.WriteString(lipgloss.NewStyle().Foreground(barColor).Render(bar))
 
-	llmUsed := false
+	llmUsed := m.result.LLMResult != nil
 	var llmPattern *detector.DetectedPattern
 	for i := range m.result.DetectedPatterns {
 		if strings.HasPrefix(m.result.DetectedPatterns[i].Type, "llm_") {
-			llmUsed = true
 			llmPattern = &m.result.DetectedPatterns[i]
 			break
 		}
@@ -220,6 +228,9 @@ func (m model) viewResults() string {
 				metricsContent.WriteString(lipgloss.NewStyle().Foreground(mutedColor).Render(fmt.Sprintf("    \"%s\"\n", reasoning)))
 			}
 		}
+	} else if llmUsed {
+		metricsContent.WriteString("\n")
+		metricsContent.WriteString(lipgloss.NewStyle().Foreground(secondaryColor).Render("LLM consulted — no attack detected") + "\n")
 	} else if m.enableLLM && m.llmProvider != "none" {
 		metricsContent.WriteString("\n")
 		modeNames := []string{"always", "when uncertain", "when safe"}

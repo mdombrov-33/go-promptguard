@@ -33,6 +33,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
+	case warmupCompleteMsg:
+		m.warming = false
+		return m, nil
 	}
 
 	switch m.screen {
@@ -96,7 +100,7 @@ func (m model) updateCheck(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if m.input.Value() != "" && !m.checking {
+			if m.input.Value() != "" && !m.checking && !m.warming {
 				m.lastInput = m.input.Value()
 				m.checking = true
 				return m, m.checkInputCmd()
@@ -124,6 +128,8 @@ func (m model) checkInputCmd() tea.Cmd {
 type checkCompleteMsg struct {
 	result *detector.Result
 }
+
+type warmupCompleteMsg struct{}
 
 func (m model) updateResults(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -168,8 +174,9 @@ func (m model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if changed {
-			m.updateGuard()
+			cmd := m.updateGuard()
 			saveConfig(&m)
+			return m, cmd
 		}
 	}
 	return m, nil
